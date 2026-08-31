@@ -22,3 +22,4 @@ Next.js + TypeScript + Supabase + Vercel
 
 ## Déploiement
 Relance de production après correction des réglages Vercel Build & Deployment.
+Validation supplémentaire du pipeline GitHub → Vercel.
