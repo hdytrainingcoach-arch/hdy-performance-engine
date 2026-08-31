@@ -19,3 +19,6 @@ PWA/mobile-first de monitoring joueur pour HDY Training / Diambars FC.
 
 ## Stack
 Next.js + TypeScript + Supabase + Vercel
+
+## Déploiement
+Relance de production après correction des réglages Vercel Build & Deployment.
