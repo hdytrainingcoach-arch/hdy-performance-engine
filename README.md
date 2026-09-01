@@ -22,4 +22,15 @@ Next.js + TypeScript + Supabase + Vercel
 
 ## Déploiement
 Relance de production après correction des réglages Vercel Build & Deployment.
-Validation supplémentaire du pipeline GitHub → Vercel.
+Pipeline GitHub -> Vercel validé en production.
+
+## Finalisation V1
+- Création des joueurs par le staff, puis invitation par email au joueur
+- Fiche joueur détaillée à la création
+- Questionnaire HOOPER le matin
+- Questionnaire RPE post-séance
+- Dashboard alimenté par les données Supabase réelles
+- Deux espaces/équipes distincts dans HDY Performance Engine : Diambars FC et HDY ELITE
+- Branding spécifique Diambars FC : noir, rouge, blanc + logo
+- CSV GPS : import/export dédié aux données GPS, séparé des questionnaires
+- Synchronisation offline à valider et renforcer avant pilote terrain
