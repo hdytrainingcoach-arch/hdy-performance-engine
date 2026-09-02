@@ -3,108 +3,145 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
-type Organization = { id:string; name:string; branding:{primary?:string;secondary?:string;background?:string;label?:string;theme?:string}|null };
+type Organization = { id:string; name:string; branding:{primary?:string;secondary?:string;background?:string;label?:string}|null };
 type Team = { id:string; organization_id:string; name:string; category:string|null; season:string|null };
-type Player = { id:string; organization_id:string; team_id:string|null; display_name:string|null; first_name:string; last_name:string; birth_date:string|null; birth_year:number|null; position:string|null; primary_position:string|null; category:string|null; season:string|null; status:string; height_cm:number|null; weight_kg:number|null; dominant_foot:string|null; dossier_status:string; active:boolean };
-type Comparison = { player_id:string; organization_id:string; team_id:string|null; display_name:string|null; first_name:string; last_name:string; position:string|null; birth_date:string|null; age_years:number|null; height_cm:number|null; weight_kg:number|null; bmi:number|null; latest_tests:Record<string,{value:number;unit:string;tested_at:string;category:string}>|null; latest_test_count:number };
-type TestDefinition = { id:string; organization_id:string|null; name:string; category:string; protocol:string|null; unit:string|null; active:boolean };
-type Membership = { id:string; user_id:string; organization_id:string; team_id:string|null; role:string; active:boolean; permissions:Record<string,boolean>|null };
-type Profile = { user_id:string; full_name:string|null; is_super_admin:boolean };
+type Player = { id:string; organization_id:string; team_id:string|null; display_name:string|null; first_name:string; last_name:string; birth_date:string|null; birth_year:number|null; position:string|null; primary_position:string|null; status:string; height_cm:number|null; weight_kg:number|null; dossier_status:string; active:boolean };
+type Comparison = { player_id:string; organization_id:string; team_id:string|null; display_name:string|null; first_name:string; last_name:string; position:string|null; age_years:number|null; height_cm:number|null; weight_kg:number|null; bmi:number|null; latest_tests:Record<string,{value:number;unit:string}>|null };
 type Tab = 'overview'|'players'|'compare'|'tests'|'staff';
 
+type CompareRow = { label:string; value:(p:Comparison)=>string };
+
 const DIAMBARS_ORDER=['PRO A','U19 - PRO B','U17','U15'];
-const EMPTY_PLAYER={first_name:'',last_name:'',birth_date:'',position:'',height_cm:'',weight_kg:'',dominant_foot:'',status:'disponible'};
+const EMPTY_PLAYER={first_name:'',last_name:'',birth_date:'',position:'',height_cm:'',weight_kg:'',status:'disponible'};
 
 export default function ManagementCenter(){
- const [ready,setReady]=useState(false); const [authorized,setAuthorized]=useState(false); const [error,setError]=useState(''); const [notice,setNotice]=useState('');
- const [organizations,setOrganizations]=useState<Organization[]>([]); const [teams,setTeams]=useState<Team[]>([]); const [players,setPlayers]=useState<Player[]>([]); const [comparisons,setComparisons]=useState<Comparison[]>([]); const [tests,setTests]=useState<TestDefinition[]>([]); const [memberships,setMemberships]=useState<Membership[]>([]); const [profiles,setProfiles]=useState<Profile[]>([]);
- const [orgId,setOrgId]=useState(''); const [teamId,setTeamId]=useState(''); const [tab,setTab]=useState<Tab>('overview'); const [search,setSearch]=useState('');
- const [showForm,setShowForm]=useState(false); const [editId,setEditId]=useState<string|null>(null); const [form,setForm]=useState({...EMPTY_PLAYER}); const [saving,setSaving]=useState(false);
- const [compareIds,setCompareIds]=useState<string[]>([]);
+  const [ready,setReady]=useState(false);
+  const [authorized,setAuthorized]=useState(false);
+  const [error,setError]=useState('');
+  const [notice,setNotice]=useState('');
+  const [organizations,setOrganizations]=useState<Organization[]>([]);
+  const [teams,setTeams]=useState<Team[]>([]);
+  const [players,setPlayers]=useState<Player[]>([]);
+  const [comparisons,setComparisons]=useState<Comparison[]>([]);
+  const [orgId,setOrgId]=useState('');
+  const [teamId,setTeamId]=useState('');
+  const [tab,setTab]=useState<Tab>('overview');
+  const [search,setSearch]=useState('');
+  const [showForm,setShowForm]=useState(false);
+  const [editId,setEditId]=useState<string|null>(null);
+  const [form,setForm]=useState({...EMPTY_PLAYER});
+  const [compareIds,setCompareIds]=useState<string[]>([]);
 
- async function loadAll(){
-  setError('');
-  const {data:sessionData}=await supabase.auth.getSession(); const session=sessionData.session;
-  if(!session){setReady(true);return}
-  const {data:profile}=await supabase.from('profiles').select('is_super_admin').eq('user_id',session.user.id).maybeSingle();
-  if(!profile?.is_super_admin){setReady(true);return}
-  setAuthorized(true);
-  const [o,t,p,c,d,m,pr]=await Promise.all([
-   supabase.from('organizations').select('id,name,branding').order('name'),
-   supabase.from('teams').select('id,organization_id,name,category,season'),
-   supabase.from('players').select('id,organization_id,team_id,display_name,first_name,last_name,birth_date,birth_year,position,primary_position,category,season,status,height_cm,weight_kg,dominant_foot,dossier_status,active').eq('active',true),
-   supabase.from('player_comparison_latest').select('*'),
-   supabase.from('test_definitions').select('id,organization_id,name,category,protocol,unit,active').eq('active',true).order('category').order('name'),
-   supabase.from('memberships').select('id,user_id,organization_id,team_id,role,active,permissions').eq('active',true),
-   supabase.from('profiles').select('user_id,full_name,is_super_admin'),
-  ]);
-  const firstErr=o.error||t.error||p.error||c.error||d.error||m.error||pr.error; if(firstErr)setError(firstErr.message);
-  const orgs=(o.data||[]) as Organization[]; setOrganizations(orgs); setTeams((t.data||[]) as Team[]); setPlayers((p.data||[]) as Player[]); setComparisons((c.data||[]) as Comparison[]); setTests((d.data||[]) as TestDefinition[]); setMemberships((m.data||[]) as Membership[]); setProfiles((pr.data||[]) as Profile[]);
-  if(!orgId){const diambars=orgs.find(x=>x.name==='Diambars FC'); setOrgId((diambars||orgs[0])?.id||'')}
-  setReady(true);
- }
- useEffect(()=>{loadAll()},[]);
+  async function loadAll(){
+    setError('');
+    const {data:{session}}=await supabase.auth.getSession();
+    if(!session){setReady(true);return;}
+    const {data:profile}=await supabase.from('profiles').select('is_super_admin').eq('user_id',session.user.id).maybeSingle();
+    if(!profile?.is_super_admin){setReady(true);return;}
+    setAuthorized(true);
+    const [o,t,p,c]=await Promise.all([
+      supabase.from('organizations').select('id,name,branding').order('name'),
+      supabase.from('teams').select('id,organization_id,name,category,season'),
+      supabase.from('players').select('id,organization_id,team_id,display_name,first_name,last_name,birth_date,birth_year,position,primary_position,status,height_cm,weight_kg,dossier_status,active').eq('active',true),
+      supabase.from('player_comparison_latest').select('*')
+    ]);
+    const firstErr=o.error||t.error||p.error||c.error;
+    if(firstErr)setError(firstErr.message);
+    const orgs=(o.data||[]) as Organization[];
+    setOrganizations(orgs); setTeams((t.data||[]) as Team[]); setPlayers((p.data||[]) as Player[]); setComparisons((c.data||[]) as Comparison[]);
+    if(!orgId){const d=orgs.find(x=>x.name==='Diambars FC'); setOrgId((d||orgs[0])?.id||'');}
+    setReady(true);
+  }
 
- const selectedOrg=organizations.find(o=>o.id===orgId)||null; const isDiambars=selectedOrg?.name==='Diambars FC'; const accent=selectedOrg?.branding?.primary||'#111111'; const bg=selectedOrg?.branding?.background||'#F5F5F5';
- const orgTeams=useMemo(()=>{const list=teams.filter(t=>t.organization_id===orgId); if(!isDiambars)return list; return [...list].sort((a,b)=>{const ai=DIAMBARS_ORDER.indexOf(a.name),bi=DIAMBARS_ORDER.indexOf(b.name);return(ai<0?99:ai)-(bi<0?99:bi)})},[teams,orgId,isDiambars]);
- useEffect(()=>{if(!orgId)return; if(isDiambars&&orgTeams.length)setTeamId(x=>orgTeams.some(t=>t.id===x)?x:orgTeams[0].id); else setTeamId('')},[orgId,isDiambars,orgTeams]);
- const scopePlayers=players.filter(p=>p.organization_id===orgId&&(!teamId||p.team_id===teamId));
- const filteredPlayers=scopePlayers.filter(p=>(p.display_name||`${p.first_name} ${p.last_name}`).toLowerCase().includes(search.toLowerCase())||(p.position||'').toLowerCase().includes(search.toLowerCase()));
- const orgPlayers=players.filter(p=>p.organization_id===orgId); const orgComparisons=comparisons.filter(p=>p.organization_id===orgId&&(!teamId||p.team_id===teamId));
- const selectedComparisons=orgComparisons.filter(p=>compareIds.includes(p.player_id));
- const orgMemberships=memberships.filter(m=>m.organization_id===orgId);
+  useEffect(()=>{void loadAll();},[]);
 
- function startCreate(){setEditId(null);setForm({...EMPTY_PLAYER});setShowForm(true)}
- function startEdit(p:Player){setEditId(p.id);setForm({first_name:p.first_name,last_name:p.last_name,birth_date:p.birth_date||'',position:p.primary_position||p.position||'',height_cm:p.height_cm?.toString()||'',weight_kg:p.weight_kg?.toString()||'',dominant_foot:p.dominant_foot||'',status:p.status||'disponible'});setShowForm(true)}
- async function savePlayer(e:FormEvent){e.preventDefault(); if(!orgId||!form.first_name.trim()||!form.last_name.trim())return; setSaving(true);setError('');
-  const selectedTeam=teams.find(t=>t.id===teamId); const payload={organization_id:orgId,team_id:teamId||null,first_name:form.first_name.trim(),last_name:form.last_name.trim(),display_name:`${form.first_name.trim()} ${form.last_name.trim()}`,birth_date:form.birth_date||null,birth_year:form.birth_date?Number(form.birth_date.slice(0,4)):null,position:form.position||null,primary_position:form.position||null,height_cm:form.height_cm?Number(form.height_cm):null,weight_kg:form.weight_kg?Number(form.weight_kg):null,dominant_foot:form.dominant_foot||null,status:form.status||'disponible',category:selectedTeam?.category||null,season:selectedTeam?.season||'2026-2027',dossier_status:'draft',active:true,updated_at:new Date().toISOString()};
-  const result=editId?await supabase.from('players').update(payload).eq('id',editId):await supabase.from('players').insert(payload); setSaving(false); if(result.error){setError(result.error.message);return} setNotice(editId?'Joueur mis à jour.':'Joueur créé en brouillon.');setShowForm(false);await loadAll();
- }
- async function deactivatePlayer(id:string){if(!window.confirm('Désactiver ce joueur ? Son historique sera conservé.'))return; const {error:e}=await supabase.from('players').update({active:false,updated_at:new Date().toISOString()}).eq('id',id); if(e)setError(e.message);else{setNotice('Joueur désactivé, historique conservé.');await loadAll()}}
- function toggleCompare(id:string){setCompareIds(v=>v.includes(id)?v.filter(x=>x!==id):(v.length<4?[...v,id]:v))}
- function profileName(userId:string){return profiles.find(p=>p.user_id===userId)?.full_name||'Utilisateur'}
- function teamName(id:string|null){return teams.find(t=>t.id===id)?.name||'Toutes équipes'}
+  const selectedOrg=organizations.find(o=>o.id===orgId)||null;
+  const isDiambars=selectedOrg?.name==='Diambars FC';
+  const accent=selectedOrg?.branding?.primary||'#111111';
+  const background=selectedOrg?.branding?.background||'#F5F5F5';
+  const orgTeams=useMemo(()=>{
+    const list=teams.filter(t=>t.organization_id===orgId);
+    return isDiambars?[...list].sort((a,b)=>DIAMBARS_ORDER.indexOf(a.name)-DIAMBARS_ORDER.indexOf(b.name)):list;
+  },[teams,orgId,isDiambars]);
 
- if(!ready)return <main style={s.center}>Chargement du centre de gestion…</main>;
- if(!authorized)return <main style={s.center}>Accès super-administrateur requis.</main>;
- return <main style={{minHeight:'100vh',background:bg,color:'#111',fontFamily:'Arial,sans-serif'}}>
-  <header style={{...s.header,borderBottomColor:accent}}><div style={s.brandWrap}><div style={{...s.logo,background:isDiambars?'#D71920':'#111'}}>{isDiambars?'DFC':'HDY'}</div><div><b>HDY Performance Engine</b><small style={s.block}>Centre de gestion · Administrateur principal</small></div></div><div style={s.headerActions}><a href="/" style={s.secondaryBtn}>Dashboard</a><button onClick={()=>supabase.auth.signOut().then(()=>location.href='/')} style={s.secondaryBtn}>Déconnexion</button></div></header>
-  <div style={s.layout}>
-   <aside style={s.sidebar}>
-    <div style={s.sideLabel}>ENVIRONNEMENT</div>
-    {organizations.map(o=><button key={o.id} onClick={()=>{setOrgId(o.id);setCompareIds([])}} style={{...s.orgBtn,borderColor:o.id===orgId?(o.branding?.primary||'#111'):'#E5E7EB',background:o.id===orgId?(o.name==='Diambars FC'?'#FFF1F2':'#F3F4F6'):'#fff'}}><span style={{...s.dot,background:o.name==='Diambars FC'?'#D71920':'#111'}}/>{o.branding?.label||o.name}</button>)}
-    {isDiambars&&<><div style={{...s.sideLabel,marginTop:20}}>ÉQUIPES</div>{orgTeams.map(t=><button key={t.id} onClick={()=>{setTeamId(t.id);setCompareIds([])}} style={{...s.teamBtn,background:t.id===teamId?'#111':'transparent',color:t.id===teamId?'#fff':'#111',borderLeftColor:t.id===teamId?'#D71920':'transparent'}}><span>{t.name}</span><small>{players.filter(p=>p.team_id===t.id).length}</small></button>)}</>}
-   </aside>
-   <section style={s.main}>
-    <div style={s.hero}><div><div style={{...s.kicker,color:accent}}>{selectedOrg?.branding?.label||selectedOrg?.name}</div><h1 style={s.h1}>Centre de gestion</h1><p style={s.muted}>Pilote les effectifs, les tests, la comparaison des profils et les accès staff depuis un seul écran.</p></div><div style={{...s.summary,borderTopColor:accent}}><small>JOUEURS ACTIFS</small><strong>{orgPlayers.length}</strong></div></div>
-    <nav style={s.tabs}>{([['overview','Vue générale'],['players','Joueurs'],['compare','Comparateur'],['tests','Tests sportifs'],['staff','Staff & accès']] as [Tab,string][]).map(([id,label])=><button key={id} onClick={()=>setTab(id)} style={{...s.tab,borderBottomColor:tab===id?accent:'transparent',color:tab===id?'#111':'#6B7280'}}>{label}</button>)}</nav>
-    {error&&<div style={s.error}>{error}</div>}{notice&&<div style={s.notice}>{notice}</div>}
+  useEffect(()=>{
+    if(!orgId)return;
+    if(isDiambars&&orgTeams.length)setTeamId(current=>orgTeams.some(t=>t.id===current)?current:orgTeams[0].id);
+    else setTeamId('');
+    setCompareIds([]);
+  },[orgId,isDiambars,orgTeams]);
 
-    {tab==='overview'&&<div style={s.grid4}>
-      {isDiambars?orgTeams.map(t=><article key={t.id} style={{...s.card,borderTopColor:'#D71920'}}><small>{t.season||'2026-2027'}</small><h2 style={s.cardTitle}>{t.name}</h2><strong style={s.big}>{players.filter(p=>p.team_id===t.id).length}</strong><span style={s.muted}>joueurs actifs</span><button style={s.inlineBtn} onClick={()=>{setTeamId(t.id);setTab('players')}}>Gérer l’effectif →</button></article>):<article style={{...s.card,borderTopColor:'#111'}}><small>ENVIRONNEMENT INDIVIDUEL</small><h2 style={s.cardTitle}>HDY ELITE</h2><strong style={s.big}>{orgPlayers.length}</strong><span style={s.muted}>athlètes actifs</span><button style={s.inlineBtn} onClick={()=>setTab('players')}>Gérer les athlètes →</button></article>}
-    </div>}
+  const orgPlayers=players.filter(p=>p.organization_id===orgId);
+  const scopePlayers=orgPlayers.filter(p=>!teamId||p.team_id===teamId);
+  const filteredPlayers=scopePlayers.filter(p=>`${p.display_name||''} ${p.first_name} ${p.last_name} ${p.position||''}`.toLowerCase().includes(search.toLowerCase()));
+  const orgComparisons=comparisons.filter(p=>p.organization_id===orgId&&(!teamId||p.team_id===teamId));
+  const selectedComparisons=orgComparisons.filter(p=>compareIds.includes(p.player_id));
 
-    {tab==='players'&&<section style={s.panel}><div style={s.panelHead}><div><small style={s.kicker}>EFFECTIF</small><h2 style={{margin:'4px 0'}}>{isDiambars?(orgTeams.find(t=>t.id===teamId)?.name||'Équipe'):'HDY ELITE'}</h2></div><div style={s.actions}><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher joueur / poste" style={s.input}/><button onClick={startCreate} style={{...s.primaryBtn,background:accent}}>+ Nouveau joueur</button></div></div>
-      <div style={s.tableWrap}><table style={s.table}><thead><tr>{['Joueur','Année','Poste','Taille','Poids','Statut','Dossier','Actions'].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead><tbody>{filteredPlayers.map(p=><tr key={p.id}><td style={s.td}><b>{p.display_name||`${p.first_name} ${p.last_name}`}</b></td><td style={s.td}>{p.birth_year||'—'}</td><td style={s.td}>{p.primary_position||p.position||'—'}</td><td style={s.td}>{p.height_cm?`${p.height_cm} cm`:'—'}</td><td style={s.td}>{p.weight_kg?`${p.weight_kg} kg`:'—'}</td><td style={s.td}>{p.status}</td><td style={s.td}><span style={s.badge}>{p.dossier_status}</span></td><td style={s.td}><div style={s.rowActions}><button onClick={()=>startEdit(p)} style={s.miniBtn}>Modifier</button><button onClick={()=>deactivatePlayer(p.id)} style={s.dangerBtn}>Désactiver</button></div></td></tr>)}</tbody></table></div>
-      {!filteredPlayers.length&&<div style={s.empty}>Aucun joueur dans cette sélection.</div>}
-    </section>}
+  function toggleCompare(id:string){setCompareIds(v=>v.includes(id)?v.filter(x=>x!==id):(v.length<4?[...v,id]:v));}
+  function startCreate(){setEditId(null);setForm({...EMPTY_PLAYER});setShowForm(true);}
+  function startEdit(p:Player){setEditId(p.id);setForm({first_name:p.first_name,last_name:p.last_name,birth_date:p.birth_date||'',position:p.primary_position||p.position||'',height_cm:p.height_cm?.toString()||'',weight_kg:p.weight_kg?.toString()||'',status:p.status||'disponible'});setShowForm(true);}
+  async function savePlayer(e:FormEvent){
+    e.preventDefault();
+    const team=teams.find(t=>t.id===teamId);
+    const payload={organization_id:orgId,team_id:teamId||null,first_name:form.first_name.trim(),last_name:form.last_name.trim(),display_name:`${form.first_name.trim()} ${form.last_name.trim()}`,birth_date:form.birth_date||null,birth_year:form.birth_date?Number(form.birth_date.slice(0,4)):null,position:form.position||null,primary_position:form.position||null,height_cm:form.height_cm?Number(form.height_cm):null,weight_kg:form.weight_kg?Number(form.weight_kg):null,status:form.status||'disponible',category:team?.category||null,season:team?.season||'2026-2027',dossier_status:'draft',active:true,updated_at:new Date().toISOString()};
+    const result=editId?await supabase.from('players').update(payload).eq('id',editId):await supabase.from('players').insert(payload);
+    if(result.error){setError(result.error.message);return;}
+    setNotice(editId?'Joueur mis à jour.':'Joueur créé en brouillon.');setShowForm(false);await loadAll();
+  }
 
-    {tab==='compare'&&<section style={s.panel}><div style={s.panelHead}><div><small style={s.kicker}>COMPARAISON DES PROFILS</small><h2 style={{margin:'4px 0'}}>Sélectionne jusqu’à 4 joueurs</h2><p style={s.muted}>Comparaison descriptive : âge, taille, poids, poste et derniers tests enregistrés. Pas de score talent automatique.</p></div></div>
-      <div style={s.comparePicker}>{orgComparisons.map(p=><button key={p.player_id} onClick={()=>toggleCompare(p.player_id)} style={{...s.pickBtn,borderColor:compareIds.includes(p.player_id)?accent:'#E5E7EB',background:compareIds.includes(p.player_id)?'#F9FAFB':'#fff'}}>{p.display_name||`${p.first_name} ${p.last_name}`}<small>{p.position||'—'}</small></button>)}</div>
-      {selectedComparisons.length>0&&<div style={s.tableWrap}><table style={s.table}><thead><tr><th style={s.th}>Mesure</th>{selectedComparisons.map(p=><th key={p.player_id} style={s.th}>{p.display_name||p.last_name}</th>)}</tr></thead><tbody>
-       {[['Âge',p=>p.age_years?`${p.age_years.toFixed(1)} ans`:'—'],['Poste',p=>p.position||'—'],['Taille',p=>p.height_cm?`${p.height_cm} cm`:'—'],['Poids',p=>p.weight_kg?`${p.weight_kg} kg`:'—'],['IMC',p=>p.bmi?p.bmi.toFixed(1):'—']].map(([label,fn]:any)=><tr key={label}><td style={s.td}><b>{label}</b></td>{selectedComparisons.map(p=><td key={p.player_id} style={s.td}>{fn(p)}</td>)}</tr>)}
-       {Array.from(new Set(selectedComparisons.flatMap(p=>Object.keys(p.latest_tests||{})))).sort().map(test=><tr key={test}><td style={s.td}><b>{test}</b></td>{selectedComparisons.map(p=>{const v=p.latest_tests?.[test];return <td key={p.player_id} style={s.td}>{v?`${v.value} ${v.unit}`:'—'}</td>})}</tr>)}
-      </tbody></table></div>}
-      {!selectedComparisons.length&&<div style={s.empty}>Choisis des joueurs ci-dessus pour afficher la comparaison.</div>}
-    </section>}
+  const compareRows:CompareRow[]=[
+    {label:'Âge',value:p=>p.age_years?`${p.age_years.toFixed(1)} ans`:'—'},
+    {label:'Poste',value:p=>p.position||'—'},
+    {label:'Taille',value:p=>p.height_cm?`${p.height_cm} cm`:'—'},
+    {label:'Poids',value:p=>p.weight_kg?`${p.weight_kg} kg`:'—'},
+    {label:'IMC',value:p=>p.bmi?p.bmi.toFixed(1):'—'}
+  ];
 
-    {tab==='tests'&&<section style={s.panel}><div style={s.panelHead}><div><small style={s.kicker}>BATTERIE DE TESTS</small><h2 style={{margin:'4px 0'}}>Protocoles actifs</h2></div></div><div style={s.testGrid}>{tests.filter(t=>!t.organization_id||t.organization_id===orgId).map(t=><article key={t.id} style={s.testCard}><small>{t.category.toUpperCase()}</small><strong>{t.name}</strong><span>{t.protocol||'Protocole à définir'}</span><b>{t.unit||'—'}</b></article>)}</div><div style={s.info}>Mobilité : les tests restent volontairement en attente tant que les protocoles ne sont pas définis. Broad Jump et Sargent utilisent les bras ; CMJ sans les bras ; Sprint 30 m départ arrêté.</div></section>}
+  if(!ready)return <main style={s.center}>Chargement…</main>;
+  if(!authorized)return <main style={s.center}>Accès super-administrateur requis.</main>;
 
-    {tab==='staff'&&<section style={s.panel}><div style={s.panelHead}><div><small style={s.kicker}>STAFF & ACCÈS</small><h2 style={{margin:'4px 0'}}>{selectedOrg?.name}</h2><p style={s.muted}>Les comptes apparaissent ici une fois créés dans Supabase Auth et rattachés à l’organisation.</p></div></div><div style={s.tableWrap}><table style={s.table}><thead><tr><th style={s.th}>Utilisateur</th><th style={s.th}>Rôle</th><th style={s.th}>Périmètre</th><th style={s.th}>Statut</th></tr></thead><tbody>{orgMemberships.map(m=><tr key={m.id}><td style={s.td}><b>{profileName(m.user_id)}</b></td><td style={s.td}>{m.role}</td><td style={s.td}>{teamName(m.team_id)}</td><td style={s.td}>{m.active?'Actif':'Inactif'}</td></tr>)}</tbody></table></div>{!orgMemberships.length&&<div style={s.empty}>Aucun compte staff activé dans cet environnement pour le moment.</div>}</section>}
-   </section>
-  </div>
-  {showForm&&<div style={s.overlay}><section style={s.modal}><div style={s.modalHead}><div><small style={s.kicker}>{editId?'MODIFIER':'NOUVEAU JOUEUR'}</small><h2 style={{margin:'4px 0'}}>{editId?'Mettre à jour le dossier':'Créer le dossier joueur'}</h2></div><button onClick={()=>setShowForm(false)} style={s.closeBtn}>×</button></div><form onSubmit={savePlayer} style={s.formGrid}><label style={s.label}>Prénom<input style={s.input} value={form.first_name} onChange={e=>setForm({...form,first_name:e.target.value})} required/></label><label style={s.label}>Nom<input style={s.input} value={form.last_name} onChange={e=>setForm({...form,last_name:e.target.value})} required/></label><label style={s.label}>Date de naissance<input style={s.input} type="date" value={form.birth_date} onChange={e=>setForm({...form,birth_date:e.target.value})}/></label><label style={s.label}>Poste<input style={s.input} value={form.position} onChange={e=>setForm({...form,position:e.target.value})} placeholder="DC, MC, BU…"/></label><label style={s.label}>Taille (cm)<input style={s.input} type="number" step="0.1" value={form.height_cm} onChange={e=>setForm({...form,height_cm:e.target.value})}/></label><label style={s.label}>Poids (kg)<input style={s.input} type="number" step="0.1" value={form.weight_kg} onChange={e=>setForm({...form,weight_kg:e.target.value})}/></label><label style={s.label}>Pied dominant<select style={s.input} value={form.dominant_foot} onChange={e=>setForm({...form,dominant_foot:e.target.value})}><option value="">Non renseigné</option><option>Droit</option><option>Gauche</option><option>Ambidextre</option></select></label><label style={s.label}>Statut<select style={s.input} value={form.status} onChange={e=>setForm({...form,status:e.target.value})}><option value="disponible">Disponible</option><option value="vigilance">Vigilance</option><option value="réathlétisation">Réathlétisation</option><option value="indisponible">Indisponible</option></select></label><div style={s.formActions}><button type="button" onClick={()=>setShowForm(false)} style={s.secondaryBtn}>Annuler</button><button disabled={saving} style={{...s.primaryBtn,background:accent}}>{saving?'Enregistrement…':editId?'Enregistrer':'Créer le joueur'}</button></div></form></section></div>}
- </main>
+  return <main style={{minHeight:'100vh',background,color:'#111',fontFamily:'Arial,sans-serif'}}>
+    <header style={{...s.header,borderBottomColor:accent}}>
+      <div><strong>HDY Performance Engine</strong><small style={{display:'block'}}>Centre de gestion</small></div>
+      <a href="/" style={s.link}>Dashboard</a>
+    </header>
+
+    <section style={s.wrap}>
+      <div style={s.selectorPanel}>
+        <label style={s.label}>ENVIRONNEMENT
+          <select value={orgId} onChange={e=>setOrgId(e.target.value)} style={{...s.select,borderColor:accent}}>
+            {organizations.map(o=><option key={o.id} value={o.id}>{o.branding?.label||o.name}</option>)}
+          </select>
+        </label>
+        {isDiambars&&<label style={s.label}>ÉQUIPE
+          <select value={teamId} onChange={e=>setTeamId(e.target.value)} style={{...s.select,borderColor:'#D71920'}}>
+            {orgTeams.map(t=><option key={t.id} value={t.id}>{t.name} · {players.filter(p=>p.team_id===t.id).length} joueurs</option>)}
+          </select>
+        </label>}
+      </div>
+
+      <div style={s.hero}><div><small style={{color:accent,fontWeight:800}}>{selectedOrg?.branding?.label||selectedOrg?.name}</small><h1 style={{margin:'5px 0'}}>Centre de gestion</h1><p style={s.muted}>Effectifs, joueurs et comparaison des profils.</p></div><div style={{...s.kpi,borderTopColor:accent}}><small>JOUEURS ACTIFS</small><strong>{orgPlayers.length}</strong></div></div>
+
+      <nav style={s.tabs}>{([['overview','Vue générale'],['players','Joueurs'],['compare','Comparateur'],['tests','Tests sportifs'],['staff','Staff & accès']] as [Tab,string][]).map(([id,label])=><button key={id} onClick={()=>setTab(id)} style={{...s.tab,borderBottomColor:tab===id?accent:'transparent'}}>{label}</button>)}</nav>
+      {error&&<div style={s.error}>{error}</div>}{notice&&<div style={s.notice}>{notice}</div>}
+
+      {tab==='overview'&&<div style={s.cards}>{isDiambars?orgTeams.map(t=><article key={t.id} style={{...s.card,borderTopColor:'#D71920'}}><small>{t.season}</small><h2>{t.name}</h2><strong style={s.big}>{players.filter(p=>p.team_id===t.id).length}</strong><span> joueurs</span><button onClick={()=>{setTeamId(t.id);setTab('players')}} style={s.textBtn}>Gérer l’effectif →</button></article>):<article style={{...s.card,borderTopColor:'#111'}}><h2>HDY ELITE</h2><strong style={s.big}>{orgPlayers.length}</strong><span> athlètes</span></article>}</div>}
+
+      {tab==='players'&&<section style={s.panel}>
+        <div style={s.panelHead}><h2>{isDiambars?orgTeams.find(t=>t.id===teamId)?.name:'HDY ELITE'}</h2><div style={s.actions}><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher" style={s.input}/><button onClick={startCreate} style={{...s.primary,background:accent}}>+ Nouveau joueur</button></div></div>
+        <div style={s.tableWrap}><table style={s.table}><thead><tr>{['Joueur','Année','Poste','Taille','Poids','Statut','Actions'].map(h=><th key={h} style={s.th}>{h}</th>)}</tr></thead><tbody>{filteredPlayers.map(p=><tr key={p.id}><td style={s.td}><b>{p.display_name||`${p.first_name} ${p.last_name}`}</b></td><td style={s.td}>{p.birth_year||'—'}</td><td style={s.td}>{p.primary_position||p.position||'—'}</td><td style={s.td}>{p.height_cm?`${p.height_cm} cm`:'—'}</td><td style={s.td}>{p.weight_kg?`${p.weight_kg} kg`:'—'}</td><td style={s.td}>{p.status}</td><td style={s.td}><button onClick={()=>startEdit(p)} style={s.mini}>Modifier</button></td></tr>)}</tbody></table></div>
+      </section>}
+
+      {tab==='compare'&&<section style={s.panel}><h2>Comparateur · jusqu’à 4 joueurs</h2><div style={s.pickGrid}>{orgComparisons.map((p:Comparison)=><button key={p.player_id} onClick={()=>toggleCompare(p.player_id)} style={{...s.pick,borderColor:compareIds.includes(p.player_id)?accent:'#E5E7EB'}}>{p.display_name||`${p.first_name} ${p.last_name}`}<small>{p.position||'—'}</small></button>)}</div>{selectedComparisons.length>0&&<div style={s.tableWrap}><table style={s.table}><thead><tr><th style={s.th}>Mesure</th>{selectedComparisons.map((p:Comparison)=><th key={p.player_id} style={s.th}>{p.display_name||p.last_name}</th>)}</tr></thead><tbody>{compareRows.map(row=><tr key={row.label}><td style={s.td}><b>{row.label}</b></td>{selectedComparisons.map((p:Comparison)=><td key={p.player_id} style={s.td}>{row.value(p)}</td>)}</tr>)}</tbody></table></div>}</section>}
+
+      {tab==='tests'&&<section style={s.panel}><h2>Tests sportifs</h2><p style={s.muted}>Les protocoles actifs restent disponibles dans la base. La saisie détaillée sera ajoutée dans le prochain lot.</p></section>}
+      {tab==='staff'&&<section style={s.panel}><h2>Staff & accès</h2><p style={s.muted}>Gestion des accès par organisation et équipe. Ton compte reste super-administrateur principal.</p></section>}
+
+      {showForm&&<div style={s.modalBack}><form onSubmit={savePlayer} style={s.modal}><h2>{editId?'Modifier le joueur':'Nouveau joueur'}</h2><div style={s.formGrid}><input required placeholder="Prénom" value={form.first_name} onChange={e=>setForm({...form,first_name:e.target.value})} style={s.input}/><input required placeholder="Nom" value={form.last_name} onChange={e=>setForm({...form,last_name:e.target.value})} style={s.input}/><input type="date" value={form.birth_date} onChange={e=>setForm({...form,birth_date:e.target.value})} style={s.input}/><input placeholder="Poste" value={form.position} onChange={e=>setForm({...form,position:e.target.value})} style={s.input}/><input type="number" placeholder="Taille cm" value={form.height_cm} onChange={e=>setForm({...form,height_cm:e.target.value})} style={s.input}/><input type="number" placeholder="Poids kg" value={form.weight_kg} onChange={e=>setForm({...form,weight_kg:e.target.value})} style={s.input}/></div><div style={s.actions}><button type="button" onClick={()=>setShowForm(false)} style={s.link}>Annuler</button><button type="submit" style={{...s.primary,background:accent}}>Enregistrer</button></div></form></div>}
+    </section>
+  </main>;
 }
 
-const s:Record<string,React.CSSProperties>={center:{minHeight:'70vh',display:'grid',placeItems:'center',padding:24,fontFamily:'Arial,sans-serif'},header:{display:'flex',justifyContent:'space-between',alignItems:'center',gap:16,padding:'14px 22px',background:'#fff',borderBottom:'3px solid #111',flexWrap:'wrap'},brandWrap:{display:'flex',alignItems:'center',gap:11},logo:{width:44,height:44,borderRadius:10,color:'#fff',display:'grid',placeItems:'center',fontWeight:900},block:{display:'block',color:'#6B7280',marginTop:2},headerActions:{display:'flex',gap:8,flexWrap:'wrap'},secondaryBtn:{border:'1px solid #D1D5DB',background:'#fff',padding:'10px 13px',borderRadius:9,fontWeight:700,textDecoration:'none',color:'#111',cursor:'pointer'},layout:{display:'grid',gridTemplateColumns:'minmax(210px,240px) minmax(0,1fr)',width:'min(1440px,100%)',margin:'0 auto'},sidebar:{background:'#fff',borderRight:'1px solid #E5E7EB',padding:18,minHeight:'calc(100vh - 74px)'},sideLabel:{fontSize:10,fontWeight:900,letterSpacing:1.3,color:'#9CA3AF',margin:'5px 0 9px'},orgBtn:{width:'100%',border:'1px solid #E5E7EB',borderRadius:10,padding:'11px 10px',display:'flex',alignItems:'center',gap:9,fontWeight:800,marginBottom:7,cursor:'pointer'},dot:{width:9,height:9,borderRadius:99,flex:'0 0 auto'},teamBtn:{width:'100%',border:0,borderLeft:'3px solid transparent',padding:'10px 9px',display:'flex',justifyContent:'space-between',alignItems:'center',fontWeight:700,cursor:'pointer',borderRadius:6},main:{padding:'26px clamp(16px,3vw,38px) 60px',minWidth:0},hero:{display:'flex',justifyContent:'space-between',alignItems:'flex-end',gap:18,flexWrap:'wrap'},kicker:{fontSize:11,fontWeight:900,letterSpacing:1.25},h1:{fontSize:'clamp(28px,4vw,42px)',margin:'5px 0 7px'},muted:{color:'#6B7280',margin:'4px 0',lineHeight:1.45},summary:{background:'#fff',border:'1px solid #E5E7EB',borderTop:'4px solid #111',borderRadius:12,padding:14,minWidth:135,display:'grid',gap:4},tabs:{display:'flex',gap:4,overflowX:'auto',margin:'26px 0 18px',borderBottom:'1px solid #E5E7EB'},tab:{border:0,borderBottom:'3px solid transparent',background:'transparent',padding:'12px 14px',fontWeight:800,whiteSpace:'nowrap',cursor:'pointer'},grid4:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(210px,1fr))',gap:14},card:{background:'#fff',border:'1px solid #E5E7EB',borderTop:'4px solid #111',borderRadius:14,padding:17,display:'grid',gap:6},cardTitle:{margin:'4px 0'},big:{fontSize:34},inlineBtn:{border:0,background:'transparent',textAlign:'left',padding:'9px 0 0',fontWeight:800,cursor:'pointer'},panel:{background:'#fff',border:'1px solid #E5E7EB',borderRadius:14,padding:'clamp(14px,2vw,20px)'},panelHead:{display:'flex',justifyContent:'space-between',alignItems:'center',gap:14,flexWrap:'wrap',marginBottom:14},actions:{display:'flex',gap:8,flexWrap:'wrap'},input:{border:'1px solid #D1D5DB',borderRadius:9,padding:'11px 12px',fontSize:15,minWidth:0,background:'#fff'},primaryBtn:{border:0,color:'#fff',padding:'11px 14px',borderRadius:9,fontWeight:900,cursor:'pointer'},tableWrap:{overflowX:'auto'},table:{width:'100%',borderCollapse:'collapse',minWidth:720},th:{textAlign:'left',padding:'11px 9px',fontSize:11,color:'#6B7280',borderBottom:'1px solid #D1D5DB',textTransform:'uppercase',letterSpacing:.5},td:{padding:'12px 9px',fontSize:14,borderBottom:'1px solid #F3F4F6',verticalAlign:'middle'},badge:{padding:'4px 7px',borderRadius:999,background:'#F3F4F6',fontSize:11,fontWeight:800},rowActions:{display:'flex',gap:6},miniBtn:{border:'1px solid #D1D5DB',background:'#fff',padding:'6px 8px',borderRadius:7,fontWeight:700,cursor:'pointer'},dangerBtn:{border:'1px solid #FCA5A5',background:'#FFF1F2',color:'#B91C1C',padding:'6px 8px',borderRadius:7,fontWeight:700,cursor:'pointer'},empty:{padding:26,textAlign:'center',color:'#6B7280',background:'#F9FAFB',borderRadius:10,marginTop:12},comparePicker:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:8,marginBottom:18},pickBtn:{border:'2px solid #E5E7EB',background:'#fff',borderRadius:10,padding:11,textAlign:'left',fontWeight:800,cursor:'pointer',display:'grid',gap:3},testGrid:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:10},testCard:{border:'1px solid #E5E7EB',borderRadius:10,padding:13,display:'grid',gap:5},info:{marginTop:16,padding:13,background:'#F9FAFB',borderLeft:'4px solid #111',lineHeight:1.45},error:{padding:11,background:'#FEE2E2',color:'#991B1B',borderRadius:9,marginBottom:12},notice:{padding:11,background:'#DCFCE7',color:'#166534',borderRadius:9,marginBottom:12},overlay:{position:'fixed',inset:0,background:'rgba(0,0,0,.45)',display:'grid',placeItems:'center',padding:16,zIndex:50,overflowY:'auto'},modal:{width:'min(720px,100%)',background:'#fff',borderRadius:16,padding:20},modalHead:{display:'flex',justifyContent:'space-between',alignItems:'start',gap:10},closeBtn:{border:0,background:'#F3F4F6',borderRadius:9,width:40,height:40,fontSize:24,cursor:'pointer'},formGrid:{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:12,marginTop:16},label:{display:'grid',gap:6,fontSize:13,fontWeight:800},formActions:{gridColumn:'1 / -1',display:'flex',justifyContent:'flex-end',gap:8,marginTop:6}}
+const s:Record<string,React.CSSProperties>={
+ center:{minHeight:'70vh',display:'grid',placeItems:'center',padding:24,fontFamily:'Arial,sans-serif'},header:{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'16px 24px',background:'#fff',borderBottom:'3px solid #111'},wrap:{width:'min(1180px,calc(100% - 28px))',margin:'0 auto',padding:'24px 0 50px'},selectorPanel:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:14,background:'#fff',padding:16,borderRadius:14,border:'1px solid #E5E7EB'},label:{fontSize:12,fontWeight:800,display:'grid',gap:7},select:{width:'100%',padding:14,border:'2px solid #111',borderRadius:10,fontSize:16,background:'#fff'},hero:{display:'flex',justifyContent:'space-between',alignItems:'end',gap:20,flexWrap:'wrap',marginTop:24},muted:{color:'#6B7280'},kpi:{background:'#fff',border:'1px solid #E5E7EB',borderTop:'4px solid #111',borderRadius:12,padding:14,minWidth:150,display:'grid'},tabs:{display:'flex',gap:4,overflowX:'auto',margin:'22px 0 14px',background:'#fff',borderRadius:12,padding:'0 8px'},tab:{padding:'14px 12px',border:'0',borderBottom:'3px solid transparent',background:'transparent',fontWeight:700,whiteSpace:'nowrap',cursor:'pointer'},cards:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(190px,1fr))',gap:12},card:{background:'#fff',border:'1px solid #E5E7EB',borderTop:'4px solid #111',borderRadius:14,padding:16},big:{fontSize:32},textBtn:{display:'block',marginTop:12,border:0,background:'transparent',fontWeight:800,cursor:'pointer'},panel:{background:'#fff',border:'1px solid #E5E7EB',borderRadius:14,padding:16},panelHead:{display:'flex',justifyContent:'space-between',alignItems:'center',gap:12,flexWrap:'wrap'},actions:{display:'flex',gap:8,flexWrap:'wrap'},primary:{border:0,borderRadius:9,color:'#fff',padding:'11px 14px',fontWeight:800,cursor:'pointer'},link:{border:'1px solid #D1D5DB',borderRadius:9,padding:'10px 13px',background:'#fff',color:'#111',textDecoration:'none',fontWeight:700},input:{padding:11,border:'1px solid #D1D5DB',borderRadius:9,fontSize:16},tableWrap:{overflowX:'auto'},table:{width:'100%',borderCollapse:'collapse',minWidth:650,marginTop:12},th:{textAlign:'left',padding:'10px',fontSize:12,color:'#6B7280',borderBottom:'1px solid #E5E7EB'},td:{padding:'11px 10px',borderBottom:'1px solid #F3F4F6'},mini:{border:'1px solid #D1D5DB',background:'#fff',borderRadius:8,padding:'7px 9px'},pickGrid:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:8},pick:{padding:12,border:'2px solid #E5E7EB',background:'#fff',borderRadius:10,textAlign:'left',display:'grid',gap:4},error:{background:'#FEE2E2',color:'#991B1B',padding:12,borderRadius:10,marginBottom:10},notice:{background:'#DCFCE7',color:'#166534',padding:12,borderRadius:10,marginBottom:10},modalBack:{position:'fixed',inset:0,background:'rgba(0,0,0,.35)',display:'grid',placeItems:'center',padding:20,zIndex:50},modal:{width:'min(640px,100%)',background:'#fff',borderRadius:16,padding:20},formGrid:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:10,margin:'14px 0'}
+};
