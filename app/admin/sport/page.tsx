@@ -5,8 +5,8 @@ export default function Sport(){
   {href:'/admin/sport/tests',title:'Tests & évaluations',desc:'Saisie des résultats, protocoles actifs et suivi des performances.'},
   {href:'/admin/sport/sessions',title:'Séances',desc:'Créer les séances d’équipe et préparer le suivi RPE associé.'},
   {href:'/admin/sport/hrv',title:'HDY ELITE · HRV',desc:'Importer un CSV HRV et croiser les mesures avec Hooper, RPE et sRPE au quotidien.'},
-  {href:'/admin/workspace',title:'Monitoring',desc:'Hooper, RPE Foster, douleurs et pilotage quotidien des équipes.'},
-  {href:'/admin/workspace',title:'Comparateur',desc:'Comparer les profils athlétiques avec lecture descriptive et protocole cohérent.'},
+  {href:'/admin/sport/monitoring',title:'Monitoring',desc:'Hooper, RPE Foster, douleurs et pilotage quotidien des équipes. HRV visible uniquement pour HDY ELITE.'},
+  {href:'/admin/sport/comparator',title:'Comparateur',desc:'Comparer jusqu’à 4 profils athlétiques avec lecture descriptive et protocoles cohérents.'},
  ];
  return <main style={S.main}><header style={S.header}><div><span style={S.kicker}>HDY PERFORMANCE ENGINE</span><h1 style={S.h1}>Sport & Performance</h1><p style={S.p}>Séances, tests, monitoring et analyse. Les fonctions administratives sont séparées.</p></div><a href='/admin' style={S.back}>← Portail</a></header><section style={S.grid}>{cards.map(c=><a key={c.title} href={c.href} style={S.card}><span style={S.badge}>PERFORMANCE</span><h2>{c.title}</h2><p>{c.desc}</p><b>Ouvrir →</b></a>)}</section><section style={S.split}><div><h2>Sport & Performance</h2><p>Aucune donnée administrative sensible n’est mélangée dans cet espace.</p></div><a href='/admin/administration' style={S.admin}>Accéder à Administration →</a></section></main>
 }
