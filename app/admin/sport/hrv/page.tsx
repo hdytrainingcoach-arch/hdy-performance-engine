@@ -41,14 +41,15 @@ export default function HrvPage(){
 
  async function importRows(){
   if(!playerId||!map.date){setMsg('Sélectionne un athlète et une colonne date.');return}
-  const batch=crypto.randomUUID();let valid=0;const payload=rows.map((r,i)=>{
+  const batch=crypto.randomUUID();const payload:Row[]=[];
+  rows.forEach((r,i)=>{
    const date=toDate(r[map.date]);const rmssd=num(r[map.rmssd]),ln=num(r[map.lnrmssd]),sdnn=num(r[map.sdnn]),rhrv=num(r[map.rhr]),ready=num(r[map.readiness]);
-   if(!date||[rmssd,ln,sdnn,rhrv,ready].every(v=>v===null))return null;valid++;
-   return {organization_id:ELITE,player_id:playerId,measurement_date:date,measured_at:null,source:source||'csv',source_record_id:map.sourceid?String(r[map.sourceid]||i):String(i),rmssd_ms:rmssd,ln_rmssd:ln,sdnn_ms:sdnn,resting_hr_bpm:rhrv,readiness_score:ready,raw_payload:r,import_batch_id:batch};
-  }).filter(Boolean);
-  if(!valid){setMsg('Aucune ligne HRV valide détectée.');return}
+   if(!date||[rmssd,ln,sdnn,rhrv,ready].every(v=>v===null))return;
+   payload.push({organization_id:ELITE,player_id:playerId,measurement_date:date,measured_at:null,source:source||'csv',source_record_id:map.sourceid?String(r[map.sourceid]||i):String(i),rmssd_ms:rmssd,ln_rmssd:ln,sdnn_ms:sdnn,resting_hr_bpm:rhrv,readiness_score:ready,raw_payload:r,import_batch_id:batch});
+  });
+  if(!payload.length){setMsg('Aucune ligne HRV valide détectée.');return}
   const {error}=await supabase.from('hrv_records').upsert(payload,{onConflict:'organization_id,player_id,measurement_date,source,source_record_id',ignoreDuplicates:true});
-  if(error){setMsg(error.message);return}setMsg(`${valid} mesure(s) HRV importée(s) ou déjà présentes ✓`);await loadDaily();
+  if(error){setMsg(error.message);return}setMsg(`${payload.length} mesure(s) HRV importée(s) ou déjà présentes ✓`);await loadDaily();
  }
 
  const daily=useMemo(()=>mergeDaily(hrv,hooper,rpe),[hrv,hooper,rpe]);
