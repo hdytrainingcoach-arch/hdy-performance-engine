@@ -4,6 +4,7 @@ export default function Sport(){
  const cards=[
   {href:'/admin/sport/tests',title:'Tests & évaluations',desc:'Saisie des résultats, protocoles actifs et suivi des performances.'},
   {href:'/admin/sport/sessions',title:'Séances',desc:'Créer les séances d’équipe et préparer le suivi RPE associé.'},
+  {href:'/admin/sport/hrv',title:'HDY ELITE · HRV',desc:'Importer un CSV HRV et croiser les mesures avec Hooper, RPE et sRPE au quotidien.'},
   {href:'/admin/workspace',title:'Monitoring',desc:'Hooper, RPE Foster, douleurs et pilotage quotidien des équipes.'},
   {href:'/admin/workspace',title:'Comparateur',desc:'Comparer les profils athlétiques avec lecture descriptive et protocole cohérent.'},
  ];
