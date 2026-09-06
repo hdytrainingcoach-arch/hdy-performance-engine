@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import PWARegister from '@/components/PWARegister';
 import OrgSplash from '@/components/OrgSplash';
 import './globals.css';
+import './brand-themes.css';
 
 export const metadata: Metadata = {
   title: 'HDY Performance Engine',
