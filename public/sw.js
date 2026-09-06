@@ -1,8 +1,8 @@
-const CACHE_NAME = 'hdy-static-v2';
+const CACHE_NAME = 'hdy-static-v3';
 const STATIC_ASSETS = [
   '/offline.html',
   '/manifest.webmanifest',
-  '/diambars/manifest.webmanifest',
+  '/diambars.webmanifest',
   '/pwa/icon-192',
   '/pwa/icon-512',
   '/pwa/diambars-icon-192',
@@ -33,7 +33,7 @@ self.addEventListener('fetch', event => {
   const isStatic =
     url.pathname.startsWith('/_next/static/') ||
     url.pathname === '/manifest.webmanifest' ||
-    url.pathname === '/diambars/manifest.webmanifest' ||
+    url.pathname === '/diambars.webmanifest' ||
     url.pathname.startsWith('/pwa/') ||
     url.pathname === '/offline.html';
 
