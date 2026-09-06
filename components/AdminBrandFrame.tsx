@@ -21,21 +21,20 @@ export default function AdminBrandFrame({children}:{children:React.ReactNode}){
 
   const isDiambars=mode==='diambars';
   const isHDY=mode==='hdy';
+  const accent=isDiambars?'#D71920':'#F4F4F5';
 
   return <div style={{minHeight:'100vh',background:'#09090B'}}>
-    <header style={{position:'sticky',top:0,zIndex:9998,height:68,display:'flex',alignItems:'center',justifyContent:'space-between',gap:14,padding:'0 18px',background:'rgba(9,9,11,.96)',backdropFilter:'blur(14px)',borderBottom:`1px solid ${isDiambars?'#4A1719':'#2B2B31'}`,boxSizing:'border-box'}}>
+    <header style={{position:'sticky',top:0,zIndex:9998,height:72,display:'flex',alignItems:'center',justifyContent:'space-between',gap:14,padding:'0 18px',background:'rgba(9,9,11,.97)',backdropFilter:'blur(16px)',borderBottom:`1px solid ${isDiambars?'#4A1719':'#2B2B31'}`,boxSizing:'border-box'}}>
       <div style={{display:'flex',alignItems:'center',gap:12,minWidth:0}}>
-        <img src={isDiambars?'/pwa/diambars-icon-192':'/pwa/icon-192'} alt={isDiambars?'Diambars FC':'HDY'} style={{width:isDiambars?48:40,height:isDiambars?48:40,borderRadius:isDiambars?13:11,objectFit:'cover',flex:'0 0 auto'}}/>
+        <img src={isDiambars?'/pwa/diambars-icon-192':'/pwa/icon-192'} alt={isDiambars?'Diambars FC':'HDY'} style={{width:isDiambars?52:44,height:isDiambars?52:44,borderRadius:isDiambars?14:12,objectFit:'cover',flex:'0 0 auto',boxShadow:isDiambars?'0 0 22px rgba(215,25,32,.13)':'0 0 18px rgba(255,255,255,.05)'}}/>
         <div style={{display:'grid',gap:2,minWidth:0,color:'#fff'}}>
-          <strong style={{fontSize:isDiambars?17:14,letterSpacing:isDiambars?0.2:0.5,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{isDiambars?'DIAMBARS FC':isHDY?'HDY':'ESPACE PERFORMANCE'}</strong>
-          <span style={{fontSize:10,color:'#A1A1AA',letterSpacing:0.8,fontWeight:700}}>{isDiambars?'CELLULE PERFORMANCE · STAFF':'PLATEFORME GLOBALE'}</span>
+          <strong style={{fontSize:isDiambars?18:15,letterSpacing:isDiambars?0.2:0.5,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{isDiambars?'DIAMBARS FC':isHDY?'HDY':'ESPACE PERFORMANCE'}</strong>
+          <span style={{fontSize:10,color:'#A1A1AA',letterSpacing:0.9,fontWeight:750}}>{isDiambars?'CELLULE PERFORMANCE · STAFF':'PERFORMANCE ENGINE · GLOBAL'}</span>
         </div>
       </div>
-      <div style={{display:'flex',alignItems:'center',gap:10}}>
-        <a href={isDiambars?'/diambars':'/'} style={{display:'inline-flex',alignItems:'center',minHeight:34,padding:'0 11px',borderRadius:9,border:'1px solid #3F3F46',color:'#fff',textDecoration:'none',fontSize:11,fontWeight:850,whiteSpace:'nowrap'}}>{isDiambars?'Installer Diambars':'Installer'}</a>
-      </div>
+      <a href={isDiambars?'/diambars':'/hdy'} style={{display:'inline-flex',alignItems:'center',minHeight:36,padding:'0 12px',borderRadius:10,border:`1px solid ${isDiambars?'#5A2023':'#3F3F46'}`,background:isDiambars?'rgba(215,25,32,.09)':'rgba(255,255,255,.035)',color:accent,textDecoration:'none',fontSize:11,fontWeight:900,whiteSpace:'nowrap'}}>{isDiambars?'Installer Diambars':'Installer HDY'}</a>
     </header>
     {children}
-    <footer style={{padding:'16px 20px 22px',textAlign:'center',background:'#09090B',color:'#52525B',fontSize:9,fontWeight:750,letterSpacing:1.2}}>POWERED BY HDY PERFORMANCE ENGINE</footer>
+    <footer style={{padding:'16px 20px 22px',textAlign:'center',background:'#09090B',color:isDiambars?'#57575D':'#71717A',fontSize:9,fontWeight:750,letterSpacing:1.2}}>{isDiambars?'POWERED BY HDY PERFORMANCE ENGINE':'HDY PERFORMANCE ENGINE'}</footer>
   </div>
 }
