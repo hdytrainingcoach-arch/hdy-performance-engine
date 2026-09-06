@@ -19,21 +19,30 @@ export default function PWARegister() {
     const path=window.location.pathname;
     const nextMode=path.startsWith('/diambars')?'diambars':path.startsWith('/hdy')?'hdy':null;
     setMode(nextMode);
-
-    // Installation is deliberately exposed only from the two branded entry pages.
     if(!nextMode)return;
 
-    if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(()=>undefined)}
+    const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+
+    // iOS Add to Home Screen does not need our service worker. During the pilot,
+    // remove stale registrations/caches so Safari cannot resurrect old branding assets.
+    if(isIOS){
+      if('serviceWorker' in navigator){
+        navigator.serviceWorker.getRegistrations().then(regs=>Promise.all(regs.map(reg=>reg.unregister()))).catch(()=>undefined);
+      }
+      if('caches' in window){
+        caches.keys().then(keys=>Promise.all(keys.map(key=>caches.delete(key)))).catch(()=>undefined);
+      }
+    }else if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(()=>undefined);
+    }
 
     const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
     if(standalone){
-      // If iOS kept the entry URL when the shortcut was created, jump to the real app workspace.
       if(nextMode==='diambars' && path==='/diambars') window.location.replace('/admin/sport?app=diambars');
       if(nextMode==='hdy' && path==='/hdy') window.location.replace('/admin?app=hdy');
       return;
     }
 
-    const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
     if(isIOS)setVisible(true);
 
     const onBeforeInstall=(event:Event)=>{
