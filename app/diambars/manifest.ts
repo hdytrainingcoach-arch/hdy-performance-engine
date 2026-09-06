@@ -1,0 +1,19 @@
+import type { MetadataRoute } from 'next';
+
+export default function manifest(): MetadataRoute.Manifest {
+  return {
+    name: 'Diambars FC · Performance',
+    short_name: 'Diambars FC',
+    description: 'Espace staff Diambars FC — performance, monitoring, médical et suivi joueur.',
+    start_url: '/admin/sport',
+    scope: '/',
+    display: 'standalone',
+    background_color: '#09090B',
+    theme_color: '#D71920',
+    categories: ['sports','health','productivity'],
+    icons: [
+      {src:'/pwa/diambars-icon-192',sizes:'192x192',type:'image/png',purpose:'maskable'},
+      {src:'/pwa/diambars-icon-512',sizes:'512x512',type:'image/png',purpose:'maskable'},
+    ],
+  };
+}
