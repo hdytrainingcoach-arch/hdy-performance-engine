@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 
-const V='20260906-ios3';
+const V='20260906-ios5';
 
 function forceMeta(name:string,content:string){
   let el=document.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
@@ -29,12 +29,12 @@ export default function HDYInstall(){
   },[]);
 
   return <main style={S.main}>
-    <div style={S.fallback} aria-hidden='true'>
-      <img src={`/pwa/hdy-icon-512.png?v=${V}`} alt='' style={S.fallbackLogo}/>
+    <div style={S.fallback} aria-label='HDY Performance Engine'>
+      <div style={{...S.fallbackLogo,backgroundImage:`url('/pwa/hdy-icon-512.png?v=${V}')`}}/>
       <strong style={S.fallbackTitle}>HDY PERFORMANCE ENGINE</strong>
       <span style={S.fallbackSub}>Monitoring · Performance · Data</span>
     </div>
-    <img src={`/pwa/hdy-splash.webp?v=${V}`} alt='HDY Performance Engine — Monitoring, Performance, Data' style={S.art} onError={e=>{e.currentTarget.style.display='none'}}/>
+    <div aria-hidden='true' style={{...S.art,backgroundImage:`url('/pwa/hdy-splash.webp?v=${V}')`}}/>
     <div style={S.fade}/>
     <section style={S.actions}>
       <p style={S.kicker}>PLATEFORME GLOBALE</p>
@@ -47,10 +47,10 @@ export default function HDYInstall(){
 const S:Record<string,React.CSSProperties>={
   main:{minHeight:'100dvh',position:'relative',overflow:'hidden',display:'grid',placeItems:'center',background:'#030303',color:'#fff',fontFamily:'Inter,system-ui,sans-serif'},
   fallback:{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:12,padding:'0 28px 150px',background:'radial-gradient(circle at 50% 42%,rgba(255,255,255,.07),transparent 34%),linear-gradient(145deg,#050505,#101012 60%,#030303)'},
-  fallbackLogo:{width:'min(52vw,260px)',aspectRatio:'1',objectFit:'cover',borderRadius:36,boxShadow:'0 22px 70px rgba(255,255,255,.06)'},
+  fallbackLogo:{width:'min(52vw,260px)',aspectRatio:'1',borderRadius:36,boxShadow:'0 22px 70px rgba(255,255,255,.06)',backgroundSize:'cover',backgroundPosition:'center',backgroundRepeat:'no-repeat',backgroundColor:'#0A0A0A'},
   fallbackTitle:{fontSize:'clamp(25px,7vw,46px)',letterSpacing:-1.2,textAlign:'center'},
   fallbackSub:{fontSize:'clamp(11px,3vw,15px)',color:'#D4D4D8',textAlign:'center'},
-  art:{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'contain',background:'#030303',zIndex:1},
+  art:{position:'absolute',inset:0,zIndex:1,backgroundSize:'contain',backgroundPosition:'center',backgroundRepeat:'no-repeat',pointerEvents:'none'},
   fade:{position:'absolute',zIndex:2,left:0,right:0,bottom:0,height:'26%',background:'linear-gradient(180deg,transparent,rgba(0,0,0,.78) 50%,#030303 100%)',pointerEvents:'none'},
   actions:{position:'absolute',zIndex:3,left:18,right:18,bottom:'max(20px,env(safe-area-inset-bottom))',maxWidth:520,margin:'0 auto',display:'grid',gap:9},
   kicker:{fontSize:9,fontWeight:900,letterSpacing:1.65,color:'#A1A1AA',textAlign:'center',margin:0},
