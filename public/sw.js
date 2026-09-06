@@ -1,26 +1,8 @@
-const CACHE_NAME = 'hdy-static-v5-ios';
-const STATIC_ASSETS = [
-  '/offline.html',
-  '/hdy.webmanifest?v=20260906-ios3',
-  '/diambars.webmanifest?v=20260906-ios3',
-  '/pwa/hdy-icon-192.png?v=20260906-ios3',
-  '/pwa/hdy-icon-512.png?v=20260906-ios3',
-  '/pwa/diambars-icon-192.png?v=20260906-ios3',
-  '/pwa/diambars-icon-512.png?v=20260906-ios3',
-  '/pwa/hdy-apple-touch-icon.png?v=20260906-ios3',
-  '/pwa/diambars-apple-touch-icon.png?v=20260906-ios3',
-  '/pwa/hdy-splash.webp?v=20260906-ios3',
-  '/pwa/diambars-splash.webp?v=20260906-ios3'
-];
+const CACHE_NAME = 'hdy-static-v6-core';
+const STATIC_ASSETS = ['/offline.html'];
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(async cache => {
-      for (const asset of STATIC_ASSETS) {
-        try { await cache.add(asset); } catch (_) { /* one optional asset must not break SW install */ }
-      }
-    })
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS)).catch(()=>undefined));
   self.skipWaiting();
 });
 
@@ -37,31 +19,26 @@ self.addEventListener('fetch', event => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Never cache authenticated application pages or Supabase/API data.
+  // Never cache authenticated pages, manifests or branding assets.
   if (request.mode === 'navigate') {
     event.respondWith(fetch(request).catch(() => caches.match('/offline.html')));
     return;
   }
 
-  const isStatic =
-    url.pathname.startsWith('/_next/static/') ||
-    url.pathname === '/hdy.webmanifest' ||
-    url.pathname === '/diambars.webmanifest' ||
-    url.pathname.startsWith('/pwa/') ||
-    url.pathname === '/offline.html';
+  if (url.pathname.startsWith('/pwa/') || url.pathname.endsWith('.webmanifest')) {
+    event.respondWith(fetch(request));
+    return;
+  }
 
-  if (!isStatic) return;
-
-  event.respondWith(
-    caches.match(request).then(cached => {
-      if (cached) return cached;
-      return fetch(request).then(response => {
+  if (url.pathname.startsWith('/_next/static/')) {
+    event.respondWith(
+      caches.match(request).then(cached => cached || fetch(request).then(response => {
         if (response.ok) {
           const copy = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
         }
         return response;
-      });
-    })
-  );
+      }))
+    );
+  }
 });
