@@ -68,6 +68,6 @@ export default function PWARegister() {
         <p style={{color:'#A1A1AA',lineHeight:1.5,marginTop:0}}>Dans Safari, appuie sur <b style={{color:'#fff'}}>Partager</b>, puis sur <b style={{color:'#fff'}}>Sur l’écran d’accueil</b> et confirme avec <b style={{color:'#fff'}}>Ajouter</b>.</p>
         <button type='button' onClick={()=>setShowIOSHelp(false)} style={{width:'100%',height:46,border:0,borderRadius:12,background:club?'#D71920':'#18181B',color:'#fff',fontWeight:900}}>Compris</button>
       </div>
-    }</div>}
+    </div>}
   </>;
 }
