@@ -27,13 +27,12 @@ export default function AdminBrandFrame({children}:{children:React.ReactNode}){
       <div style={{display:'flex',alignItems:'center',gap:12,minWidth:0}}>
         <img src={isDiambars?'/pwa/diambars-icon-192':'/pwa/icon-192'} alt={isDiambars?'Diambars FC':'HDY'} style={{width:isDiambars?48:40,height:isDiambars?48:40,borderRadius:isDiambars?13:11,objectFit:'cover',flex:'0 0 auto'}}/>
         <div style={{display:'grid',gap:2,minWidth:0,color:'#fff'}}>
-          <strong style={{fontSize:isDiambars?17:14,letterSpacing:isDiambars?.2:.5,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{isDiambars?'DIAMBARS FC':isHDY?'HDY':'ESPACE PERFORMANCE'}</strong>
-          <span style={{fontSize:10,color:'#A1A1AA',letterSpacing:.8,fontWeight:700}}>{isDiambars?'CELLULE PERFORMANCE · STAFF':'PLATEFORME GLOBALE'}</span>
+          <strong style={{fontSize:isDiambars?17:14,letterSpacing:isDiambars?0.2:0.5,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{isDiambars?'DIAMBARS FC':isHDY?'HDY':'ESPACE PERFORMANCE'}</strong>
+          <span style={{fontSize:10,color:'#A1A1AA',letterSpacing:0.8,fontWeight:700}}>{isDiambars?'CELLULE PERFORMANCE · STAFF':'PLATEFORME GLOBALE'}</span>
         </div>
       </div>
       <div style={{display:'flex',alignItems:'center',gap:10}}>
         <a href={isDiambars?'/diambars':'/'} style={{display:'inline-flex',alignItems:'center',minHeight:34,padding:'0 11px',borderRadius:9,border:'1px solid #3F3F46',color:'#fff',textDecoration:'none',fontSize:11,fontWeight:850,whiteSpace:'nowrap'}}>{isDiambars?'Installer Diambars':'Installer'}</a>
-        <span style={{display:'none',fontSize:9,color:'#71717A',letterSpacing:1.1,fontWeight:800}}>HDY PERFORMANCE ENGINE</span>
       </div>
     </header>
     {children}
