@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: 'Diambars FC · Performance',
   description: 'Espace staff Diambars FC — performance, monitoring, médical et suivi joueur.',
   applicationName: 'Diambars FC',
-  manifest: '/diambars/manifest.webmanifest',
+  manifest: '/diambars.webmanifest',
   appleWebApp: { capable: true, title: 'Diambars FC', statusBarStyle: 'black-translucent' },
   icons: {
     icon: [
