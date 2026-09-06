@@ -1,14 +1,16 @@
-const CACHE_NAME = 'hdy-static-v4';
+const CACHE_NAME = 'hdy-static-v5-ios';
 const STATIC_ASSETS = [
   '/offline.html',
-  '/hdy.webmanifest',
-  '/diambars.webmanifest',
-  '/pwa/icon-192',
-  '/pwa/icon-512',
-  '/pwa/diambars-icon-192',
-  '/pwa/diambars-icon-512',
-  '/pwa/hdy-splash',
-  '/pwa/diambars-splash'
+  '/hdy.webmanifest?v=20260906-ios3',
+  '/diambars.webmanifest?v=20260906-ios3',
+  '/pwa/hdy-icon-192.png?v=20260906-ios3',
+  '/pwa/hdy-icon-512.png?v=20260906-ios3',
+  '/pwa/diambars-icon-192.png?v=20260906-ios3',
+  '/pwa/diambars-icon-512.png?v=20260906-ios3',
+  '/pwa/hdy-apple-touch-icon.png?v=20260906-ios3',
+  '/pwa/diambars-apple-touch-icon.png?v=20260906-ios3',
+  '/pwa/hdy-splash.webp?v=20260906-ios3',
+  '/pwa/diambars-splash.webp?v=20260906-ios3'
 ];
 
 self.addEventListener('install', event => {
