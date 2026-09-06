@@ -3,7 +3,7 @@
   "name": "Diambars FC · Performance",
   "short_name": "Diambars FC",
   "description": "Espace staff Diambars FC — performance, monitoring, médical et suivi joueur.",
-  "start_url": "/diambars",
+  "start_url": "/admin/sport?app=diambars",
   "scope": "/",
   "display": "standalone",
   "background_color": "#09090B",
