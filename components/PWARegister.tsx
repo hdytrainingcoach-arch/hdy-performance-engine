@@ -21,12 +21,17 @@ export default function PWARegister() {
     setMode(nextMode);
 
     // Installation is deliberately exposed only from the two branded entry pages.
-    // This prevents Chrome/Android from ever installing the wrong organization identity.
     if(!nextMode)return;
 
     if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(()=>undefined)}
+
     const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
-    if(standalone)return;
+    if(standalone){
+      // If iOS kept the entry URL when the shortcut was created, jump to the real app workspace.
+      if(nextMode==='diambars' && path==='/diambars') window.location.replace('/admin/sport?app=diambars');
+      if(nextMode==='hdy' && path==='/hdy') window.location.replace('/admin?app=hdy');
+      return;
+    }
 
     const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
     if(isIOS)setVisible(true);
@@ -66,6 +71,7 @@ export default function PWARegister() {
       <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:460,background:'#111113',color:'#fff',border:'1px solid #2B2B31',borderRadius:20,padding:20}}>
         <strong style={{display:'block',fontSize:20,marginBottom:8}}>{club?'Installer Diambars FC':'Installer HDY Performance'}</strong>
         <p style={{color:'#A1A1AA',lineHeight:1.5,marginTop:0}}>Dans Safari, appuie sur <b style={{color:'#fff'}}>Partager</b>, puis sur <b style={{color:'#fff'}}>Sur l’écran d’accueil</b> et confirme avec <b style={{color:'#fff'}}>Ajouter</b>.</p>
+        <p style={{color:'#71717A',lineHeight:1.45,fontSize:12}}>Après installation, l’icône ouvrira directement {club?'l’espace Sport & Performance Diambars':'le portail administrateur HDY'}.</p>
         <button type='button' onClick={()=>setShowIOSHelp(false)} style={{width:'100%',height:46,border:0,borderRadius:12,background:club?'#D71920':'#18181B',color:'#fff',fontWeight:900}}>Compris</button>
       </div>
     </div>}
