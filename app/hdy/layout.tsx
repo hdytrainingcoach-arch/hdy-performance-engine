@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: 'HDY Performance Engine',
   description: 'Plateforme globale — monitoring, performance et data.',
   applicationName: 'HDY Performance Engine',
-  manifest: '/manifest.webmanifest',
+  manifest: '/hdy.webmanifest',
   appleWebApp: { capable: true, title: 'HDY Performance', statusBarStyle: 'black-translucent' },
   icons: {
     icon: [
