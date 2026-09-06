@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import PWARegister from '@/components/PWARegister';
+import OrgSplash from '@/components/OrgSplash';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="fr">
       <body>
+        <OrgSplash />
         {children}
         <PWARegister />
       </body>
