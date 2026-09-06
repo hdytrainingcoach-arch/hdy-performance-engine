@@ -3,7 +3,7 @@
   "name": "HDY Performance Engine",
   "short_name": "HDY",
   "description": "Plateforme globale — monitoring, performance et data.",
-  "start_url": "/hdy",
+  "start_url": "/admin?app=hdy",
   "scope": "/",
   "display": "standalone",
   "background_color": "#050505",
