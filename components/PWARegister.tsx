@@ -18,17 +18,26 @@ export default function PWARegister() {
 
   useEffect(()=>{
     const path=window.location.pathname;
-    setClubMode(path.startsWith('/diambars'));
-    setAdminMode(path.startsWith('/admin'));
+    const diambars=path.startsWith('/diambars');
+    const admin=path.startsWith('/admin');
+    setClubMode(diambars);
+    setAdminMode(admin);
+
+    const manifest=document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+    if(manifest) manifest.href=diambars?'/diambars.webmanifest':'/manifest.webmanifest';
+    if(diambars){
+      const theme=document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+      if(theme) theme.content='#D71920';
+    }
 
     if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js',{scope:'/'}).catch(()=>undefined)}
     const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
     if(standalone)return;
 
     const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
-    if(isIOS&&!path.startsWith('/admin'))setVisible(true);
+    if(isIOS&&!admin)setVisible(true);
 
-    const onBeforeInstall=(event:Event)=>{event.preventDefault();setInstallEvent(event as BeforeInstallPromptEvent);if(!path.startsWith('/admin'))setVisible(true)};
+    const onBeforeInstall=(event:Event)=>{event.preventDefault();setInstallEvent(event as BeforeInstallPromptEvent);if(!admin)setVisible(true)};
     const onInstalled=()=>{setVisible(false);setInstallEvent(null);setShowIOSHelp(false)};
     window.addEventListener('beforeinstallprompt',onBeforeInstall);
     window.addEventListener('appinstalled',onInstalled);
