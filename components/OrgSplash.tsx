@@ -17,8 +17,7 @@ export default function OrgSplash(){
     let cancelled=false;
     let timer:ReturnType<typeof setTimeout>|undefined;
 
-    (async()=>{
-      // Explicit brand entry points always preview/install the requested organization identity.
+    async function resolveBrand(showSplash=true){
       let next:Brand=path.startsWith('/diambars')?'diambars':path.startsWith('/hdy')?'hdy':null;
 
       if(!next){
@@ -41,13 +40,23 @@ export default function OrgSplash(){
         }
       }
 
-      if(cancelled)return;
+      if(cancelled||!next)return;
+      document.documentElement.dataset.brand=next;
       setBrand(next);
-      setVisible(true);
-      timer=setTimeout(()=>setVisible(false),1700);
-    })();
+      if(showSplash){
+        setVisible(true);
+        if(timer)clearTimeout(timer);
+        timer=setTimeout(()=>setVisible(false),1700);
+      }
+    }
 
-    return()=>{cancelled=true;if(timer)clearTimeout(timer)};
+    resolveBrand(true);
+    const {data:{subscription}}=supabase.auth.onAuthStateChange(()=>{
+      // Re-resolve after sign-in/sign-out so the player immediately receives the club identity.
+      setTimeout(()=>resolveBrand(true),0);
+    });
+
+    return()=>{cancelled=true;if(timer)clearTimeout(timer);subscription.unsubscribe()};
   },[]);
 
   if(!visible||!brand)return null;
