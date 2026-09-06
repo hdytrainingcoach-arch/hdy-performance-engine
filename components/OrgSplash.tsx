@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
 const DIAMBARS='d3136b7f-ef28-43e8-af53-30fa6de70c62';
-const V='20260906-ios3';
+const V='20260906-ios4';
 type Brand='diambars'|'hdy'|null;
 
 export default function OrgSplash(){
@@ -14,32 +14,35 @@ export default function OrgSplash(){
 
   useEffect(()=>{
     const path=window.location.pathname;
-    if(path.startsWith('/join/')) return;
+
+    // /diambars and /hdy already ARE their branded launch/install screens.
+    // Rendering the global splash on top after hydration caused a second image
+    // to cover the correct screen on iOS Safari (the visible "?" symptom).
+    if(path.startsWith('/join/') || path==='/diambars' || path==='/hdy') return;
 
     let cancelled=false;
     let timer:ReturnType<typeof setTimeout>|undefined;
 
     async function resolveBrand(showSplash=true){
-      let next:Brand=path.startsWith('/diambars')?'diambars':path.startsWith('/hdy')?'hdy':null;
+      let next:Brand=null;
 
-      if(!next){
-        const {data:{session}}=await supabase.auth.getSession();
-        if(session){
-          const {data:profile}=await supabase.from('profiles').select('is_super_admin').eq('user_id',session.user.id).maybeSingle();
-          if(profile?.is_super_admin){
-            next='hdy';
-          }else{
-            const {data:members}=await supabase.from('memberships').select('organization_id,active').eq('user_id',session.user.id);
-            if((members||[]).some(m=>m.organization_id===DIAMBARS&&m.active!==false)){
-              next='diambars';
-            }else{
-              const {data:player}=await supabase.from('players').select('organization_id').eq('user_id',session.user.id).maybeSingle();
-              next=player?.organization_id===DIAMBARS?'diambars':'hdy';
-            }
-          }
-        }else{
+      const {data:{session}}=await supabase.auth.getSession();
+      if(session){
+        const {data:profile}=await supabase.from('profiles').select('is_super_admin').eq('user_id',session.user.id).maybeSingle();
+        if(profile?.is_super_admin){
           next='hdy';
+        }else{
+          const {data:members}=await supabase.from('memberships').select('organization_id,active').eq('user_id',session.user.id);
+          if((members||[]).some(m=>m.organization_id===DIAMBARS&&m.active!==false)){
+            next='diambars';
+          }else{
+            const {data:player}=await supabase.from('players').select('organization_id').eq('user_id',session.user.id).maybeSingle();
+            next=player?.organization_id===DIAMBARS?'diambars':'hdy';
+          }
         }
+      }else{
+        // Outside the dedicated install pages, keep the neutral HDY identity.
+        next='hdy';
       }
 
       if(cancelled||!next)return;
