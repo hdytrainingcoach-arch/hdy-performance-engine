@@ -10,10 +10,10 @@ export const metadata:Metadata={
   appleWebApp:{capable:true,title:'HDY Elite',statusBarStyle:'black-translucent'},
   icons:{
     icon:[
-      {url:`/pwa/hdy-icon-192.png?v=${V}`,sizes:'192x192',type:'image/png'},
-      {url:`/pwa/hdy-icon-512.png?v=${V}`,sizes:'512x512',type:'image/png'},
+      {url:`/pwa/elite-icon-192.png?v=${V}`,sizes:'192x192',type:'image/png'},
+      {url:`/pwa/elite-icon-512.png?v=${V}`,sizes:'512x512',type:'image/png'},
     ],
-    apple:[{url:`/pwa/hdy-apple-touch-icon.png?v=${V}`,sizes:'192x192',type:'image/png'}],
+    apple:[{url:`/pwa/elite-apple-touch-icon.png?v=${V}`,sizes:'192x192',type:'image/png'}],
   },
 };
 
