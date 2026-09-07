@@ -61,7 +61,11 @@ export default function AdminBrandFrame({children}:{children:React.ReactNode}){
     return()=>{delete document.documentElement.dataset.page};
   },[mode,identity.key]);
 
-  const brand=mode==='neutral'||mode==='loading'?'hdy':mode;
+  if(mode==='loading'){
+    return <div style={{minHeight:'100vh',background:'#050506',display:'grid',placeItems:'center',color:'#71717A',fontFamily:'Inter,system-ui,sans-serif'}}><span style={{fontSize:9,fontWeight:900,letterSpacing:1.8}}>CHARGEMENT DE L’ESPACE PERFORMANCE</span></div>;
+  }
+
+  const brand=mode==='neutral'?'hdy':mode;
   const isDiambars=brand==='diambars';
   const isElite=brand==='elite';
   const logo=isDiambars?'/pwa/diambars-icon-192.png?v=visual-final':isElite?'/pwa/elite-icon-192.png?v=elite-final':'/pwa/hdy-icon-192.png?v=hdy-final';
