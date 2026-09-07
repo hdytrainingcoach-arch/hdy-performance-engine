@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import BrandLogo, { type BrandKind } from '@/components/BrandLogo';
 
 const DIAMBARS='d3136b7f-ef28-43e8-af53-30fa6de70c62';
 const ELITE='5454ad8f-8f2b-4812-9923-ab7d0b1f8748';
@@ -65,10 +66,9 @@ export default function AdminBrandFrame({children}:{children:React.ReactNode}){
     return <div style={{minHeight:'100vh',background:'#050506',display:'grid',placeItems:'center',color:'#71717A',fontFamily:'Inter,system-ui,sans-serif'}}><span style={{fontSize:9,fontWeight:900,letterSpacing:1.8}}>CHARGEMENT DE L’ESPACE PERFORMANCE</span></div>;
   }
 
-  const brand=mode==='neutral'?'hdy':mode;
+  const brand=(mode==='neutral'?'hdy':mode) as BrandKind;
   const isDiambars=brand==='diambars';
   const isElite=brand==='elite';
-  const logo=isDiambars?'/pwa/diambars-icon-192.png?v=visual-final':isElite?'/pwa/elite-icon-192.png?v=20260907-elite-final':'/pwa/hdy-icon-192.png?v=hdy-final';
   const title=isDiambars?'DIAMBARS FC':isElite?'HDY ELITE':'HDY PERFORMANCE ENGINE';
   const subtitle=isDiambars?'CELLULE PERFORMANCE · STAFF':isElite?'INDIVIDUAL PERFORMANCE':'GLOBAL PERFORMANCE SYSTEM';
   const installHref=isDiambars?'/diambars':isElite?'/elite':'/hdy';
@@ -76,14 +76,14 @@ export default function AdminBrandFrame({children}:{children:React.ReactNode}){
   return <div className={`adminBrandFrame brand-${brand}`}>
     <header className='adminBrandHeader'>
       <a href={installHref} className='adminBrandIdentity' aria-label={`${title} — accueil`}>
-        <span className={`adminBrandLogo ${isElite?'roundLogo':''}`}><img src={logo} alt={title}/></span>
+        <span className='adminBrandLogoSlot'><BrandLogo brand={brand} variant='header'/></span>
         <span className='adminBrandName'><strong>{title}</strong><small>{subtitle}</small></span>
       </a>
       <div className='adminBrandActions'><span className='adminEnvironmentPill'>{identity.eyebrow}</span><a href={installHref} className='adminInstallLink'>Installer</a></div>
     </header>
     <section className={`adminPageContext page-${identity.key}`}>
       <div><span>{identity.eyebrow}</span><strong>{identity.label}</strong><p>{identity.description}</p></div>
-      <div className='adminPageBrandMark' aria-hidden='true'><img src={logo} alt=''/></div>
+      <div className='adminPageBrandMarkV2' aria-hidden='true'><BrandLogo brand={brand} variant='page' decorative/></div>
     </section>
     <div className='adminBrandContent'>{children}</div>
     <footer className='adminBrandFooter'>{isDiambars?'POWERED BY HDY PERFORMANCE ENGINE':isElite?'HDY ELITE · POWERED BY HDY PERFORMANCE ENGINE':'HDY PERFORMANCE ENGINE · A BETTER GAME GLOBALLY'}</footer>
