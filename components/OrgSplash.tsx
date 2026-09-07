@@ -64,7 +64,7 @@ export default function OrgSplash(){
   const club=brand==='diambars';
   const elite=brand==='elite';
   const splash=club?`/pwa/diambars-splash.webp?v=${V}`:elite?null:`/pwa/hdy-splash.webp?v=${V}`;
-  const icon=club?`/pwa/diambars-icon-512.png?v=${V}`:`/pwa/hdy-icon-512.png?v=${V}`;
+  const icon=club?`/pwa/diambars-icon-512.png?v=${V}`:elite?`/pwa/elite-icon-512.png?v=20260907-elite-final`:`/pwa/hdy-icon-512.png?v=${V}`;
   const title=club?'DIAMBARS FC':elite?'HDY ELITE':'HDY PERFORMANCE ENGINE';
   const sub=club?'Performance · Monitoring · Médical · Suivi joueur':elite?'Individual Performance · Monitoring · Progression':'Monitoring · Performance · Data';
 
@@ -73,7 +73,7 @@ export default function OrgSplash(){
     {elite&&<><div aria-hidden='true' style={{position:'absolute',left:'50%',top:'41%',width:'min(92vw,520px)',aspectRatio:'1',borderRadius:'50%',border:'1px solid rgba(255,255,255,.08)',transform:'translate(-50%,-50%)',boxShadow:'0 0 90px rgba(255,255,255,.04)'}}/><div aria-hidden='true' style={{position:'absolute',left:'-18%',top:'9%',width:'80%',height:1,background:'linear-gradient(90deg,transparent,#777,transparent)',transform:'rotate(-42deg)',opacity:.34}}/></>}
     <div style={{position:'absolute',inset:0,display:'grid',placeItems:'center',padding:28,textAlign:'center'}}>
       <div style={{display:'grid',placeItems:'center',gap:12}}>
-        <div style={{width:'min(46vw,220px)',aspectRatio:'1',borderRadius:elite?'50%':36,backgroundImage:`url('${icon}')`,backgroundSize:'cover',backgroundPosition:'center',backgroundRepeat:'no-repeat',backgroundColor:'#0A0A0A',border:elite?'3px solid #dedee3':'1px solid rgba(255,255,255,.08)',boxShadow:elite?'0 0 0 8px rgba(255,255,255,.03),0 20px 70px rgba(255,255,255,.08)':club?'0 20px 70px rgba(215,25,32,.18)':'0 20px 70px rgba(255,255,255,.05)'}}/>
+        <div style={{width:'min(46vw,220px)',aspectRatio:'1',borderRadius:elite?'50%':36,backgroundImage:`url('${icon}')`,backgroundSize:'cover',backgroundPosition:'center',backgroundRepeat:'no-repeat',backgroundColor:'#0A0A0A',border:elite?'1px solid rgba(255,255,255,.12)':'1px solid rgba(255,255,255,.08)',boxShadow:elite?'0 0 0 8px rgba(255,255,255,.03),0 20px 70px rgba(255,255,255,.08)':club?'0 20px 70px rgba(215,25,32,.18)':'0 20px 70px rgba(255,255,255,.05)'}}/>
         <strong style={{fontSize:club?36:elite?38:28,letterSpacing:elite?-1.5:-1}}>{title}</strong>
         <span style={{color:'#A1A1AA',fontSize:13}}>{sub}</span>
       </div>
