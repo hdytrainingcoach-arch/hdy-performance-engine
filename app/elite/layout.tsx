@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from 'next';
 
-const V='20260907-elite1';
+const V='20260907-elite-final';
 
 export const metadata:Metadata={
   title:'HDY Elite',
-  description:'Espace joueur HDY Elite — accompagnement individuel, monitoring, charge, récupération et performance.',
+  description:'Espace joueur HDY Elite — accompagnement individuel, monitoring, récupération et performance.',
   applicationName:'HDY Elite',
   manifest:`/elite.webmanifest?v=${V}`,
-  appleWebApp:{capable:true,title:'HDY Elite',statusBarStyle:'default'},
+  appleWebApp:{capable:true,title:'HDY Elite',statusBarStyle:'black-translucent'},
   icons:{
     icon:[
       {url:`/pwa/hdy-icon-192.png?v=${V}`,sizes:'192x192',type:'image/png'},
@@ -18,7 +18,7 @@ export const metadata:Metadata={
 };
 
 export const viewport:Viewport={
-  themeColor:'#F5F5F7',
+  themeColor:'#050506',
   width:'device-width',
   initialScale:1,
   viewportFit:'cover',
