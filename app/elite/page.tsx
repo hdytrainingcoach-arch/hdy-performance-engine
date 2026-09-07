@@ -10,13 +10,13 @@ export default function EliteInstall(){
     localStorage.setItem('hdy-app-mode','elite');document.documentElement.dataset.brand='elite';document.title='HDY Elite';
     forceMeta('application-name','HDY Elite');forceMeta('apple-mobile-web-app-title','HDY Elite');forceMeta('apple-mobile-web-app-capable','yes');forceMeta('mobile-web-app-capable','yes');forceMeta('theme-color','#050506');
     document.querySelectorAll('link[rel="manifest"],link[rel="icon"],link[rel="shortcut icon"],link[rel="apple-touch-icon"]').forEach(n=>n.remove());
-    addLink('manifest',`/elite.webmanifest?v=${V}`,'application/manifest+json');addLink('icon',`/pwa/hdy-icon-192.png?v=${V}`,'image/png');addLink('shortcut icon',`/pwa/hdy-icon-192.png?v=${V}`,'image/png');addLink('apple-touch-icon',`/pwa/hdy-apple-touch-icon.png?v=${V}`,'image/png');
+    addLink('manifest',`/elite.webmanifest?v=${V}`,'application/manifest+json');addLink('icon',`/pwa/elite-icon-192.png?v=${V}`,'image/png');addLink('shortcut icon',`/pwa/elite-icon-192.png?v=${V}`,'image/png');addLink('apple-touch-icon',`/pwa/elite-apple-touch-icon.png?v=${V}`,'image/png');
   },[]);
 
   return <main style={S.main}>
     <div aria-hidden='true' style={S.atmosphere}><span style={S.bandA}/><span style={S.bandB}/><span style={S.orbit}/></div>
     <section style={S.brand} aria-label='HDY Elite'>
-      <div style={S.logoFrame}><span style={S.logoFallback}>HDY</span><img src={`/pwa/hdy-icon-512.png?v=${V}`} alt='Logo HDY Elite' style={S.logoImg}/></div>
+      <div style={S.logoFrame}><span style={S.logoFallback}>HDY</span><img src={`/pwa/elite-icon-512.png?v=${V}`} alt='Logo HDY Elite' style={S.logoImg}/></div>
       <p style={S.eyebrow}>INDIVIDUAL PERFORMANCE</p>
       <strong style={S.title}>HDY ELITE</strong>
       <span style={S.sub}>Monitoring · Performance · Data</span>
@@ -34,7 +34,7 @@ const S:Record<string,React.CSSProperties>={
   bandB:{position:'absolute',width:'88%',height:90,bottom:'17%',right:'-36%',background:'linear-gradient(90deg,transparent,rgba(255,255,255,.025),transparent)',transform:'rotate(-43deg)'},
   orbit:{position:'absolute',width:'min(112vw,560px)',aspectRatio:'1',borderRadius:'50%',border:'1px solid rgba(255,255,255,.08)',left:'50%',top:'39%',transform:'translate(-50%,-50%)',boxShadow:'inset 0 0 80px rgba(255,255,255,.02)'},
   brand:{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:10,padding:'0 24px 150px',zIndex:1,textAlign:'center'},
-  logoFrame:{position:'relative',width:'min(47vw,210px)',aspectRatio:'1',borderRadius:'50%',overflow:'hidden',display:'grid',placeItems:'center',background:'#080809',border:'3px solid #E4E4E7',boxShadow:'0 0 0 8px rgba(255,255,255,.035),0 0 55px rgba(255,255,255,.10)'},
+  logoFrame:{position:'relative',width:'min(47vw,210px)',aspectRatio:'1',borderRadius:'50%',overflow:'hidden',display:'grid',placeItems:'center',background:'#080809',border:'1px solid rgba(255,255,255,.12)',boxShadow:'0 0 0 8px rgba(255,255,255,.025),0 0 55px rgba(255,255,255,.10)'},
   logoFallback:{fontSize:'clamp(34px,11vw,58px)',fontWeight:950,letterSpacing:-2,color:'#fff'},
   logoImg:{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',display:'block'},
   eyebrow:{fontSize:9,fontWeight:900,letterSpacing:2.2,color:'#8E8E93',margin:'4px 0 0'},
