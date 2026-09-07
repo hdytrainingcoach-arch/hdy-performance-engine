@@ -4,6 +4,7 @@ import OrgSplash from '@/components/OrgSplash';
 import './globals.css';
 import './brand-themes.css';
 import './player-da.css';
+import './brand-fixes.css';
 
 export const metadata: Metadata = {
   title: 'HDY Performance Engine',
