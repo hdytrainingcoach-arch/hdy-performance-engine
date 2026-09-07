@@ -1,39 +1,100 @@
-/* Organization identity layer. HDY stays monochrome; Diambars owns red/black/white inside its club experience. */
+/* Final visual identity layer — one engine, three distinct experiences. */
+:root{
+  --brand-bg:#050505;--brand-panel:#101012;--brand-panel-2:#151518;--brand-border:#28282d;
+  --brand-text:#f7f7f8;--brand-muted:#8d8d96;--brand-accent:#f4f4f5;--brand-soft:#d4d4d8;
+  --page-accent:#f4f4f5;--page-glow:rgba(255,255,255,.07)
+}
+html[data-brand='diambars']{--brand-bg:#050304;--brand-panel:#100c0d;--brand-panel-2:#171011;--brand-border:#342022;--brand-text:#fff;--brand-muted:#a1a1aa;--brand-accent:#D71920;--brand-soft:#ff3a42;--page-glow:rgba(215,25,32,.16)}
+html[data-brand='elite']{--brand-bg:#050506;--brand-panel:#101012;--brand-panel-2:#171719;--brand-border:#303036;--brand-text:#fff;--brand-muted:#a9a9b1;--brand-accent:#f4f4f5;--brand-soft:#d7d7dc;--page-glow:rgba(255,255,255,.10)}
+
+html[data-page='administration']{--page-accent:#ef4444}
+html[data-page='sport']{--page-accent:#ef4444}
+html[data-page='staff']{--page-accent:#f4f4f5}
+html[data-page='players']{--page-accent:#ef4444}
+html[data-page='dashboard']{--page-accent:#a3e635}
+html[data-page='gps']{--page-accent:#ef4444}
+html[data-page='results']{--page-accent:#60a5fa}
+html[data-page='comparator']{--page-accent:#f59e0b}
+html[data-page='alerts']{--page-accent:#fb7185}
+html[data-page='recovery']{--page-accent:#38bdf8}
+html[data-page='sessions']{--page-accent:#c084fc}
+
+/* Player application branding */
 html[data-brand='hdy'] .brand .mark{
-  font-size:0;color:transparent;background:#050505 url('/pwa/icon-192') center/cover no-repeat;
+  font-size:0;color:transparent;background:#050505 url('/pwa/hdy-icon-192.png?v=hdy-final') center/cover no-repeat;
   border-color:#2f2f33;box-shadow:0 8px 26px rgba(0,0,0,.32)
 }
-
-html[data-brand='diambars'] body{background:#050505}
+html[data-brand='diambars'] body{background:#050304}
 html[data-brand='diambars'] .brand .mark{
-  font-size:0;color:transparent;background:#080808 url('/pwa/diambars-icon-192') center/cover no-repeat;
-  border-color:#4A1719;box-shadow:0 8px 28px rgba(215,25,32,.13)
+  font-size:0;color:transparent;background:#080808 url('/pwa/diambars-icon-192.png?v=visual-final') center/cover no-repeat;
+  border-color:#4A1719;box-shadow:0 8px 28px rgba(215,25,32,.18)
 }
-html[data-brand='diambars'] .brand>div:last-child{font-size:0;line-height:1.15}
-html[data-brand='diambars'] .brand>div:last-child b,
-html[data-brand='diambars'] .brand>div:last-child span{display:none}
-html[data-brand='diambars'] .brand>div:last-child:before{
-  content:'DIAMBARS FC';font-size:13px;font-weight:950;letter-spacing:.7px;color:#fff
+html[data-brand='elite'] .brand .mark{
+  width:44px;height:44px;border-radius:50%;font-size:0;color:transparent;
+  background:#080809 url('/pwa/hdy-icon-192.png?v=elite-final') center/cover no-repeat;
+  border:2px solid #dedee3;box-shadow:0 0 0 5px rgba(255,255,255,.035),0 8px 28px rgba(0,0,0,.28)
 }
-html[data-brand='diambars'] .brand>div:last-child:after{
-  content:'PERFORMANCE · MONITORING';font-size:8px;font-weight:850;letter-spacing:1.25px;color:#D71920;margin-top:3px
-}
-html[data-brand='diambars'] .appShell,
-html[data-brand='diambars'] .flow{background:radial-gradient(circle at 50% 0,#19090b 0,#080808 24%,#060606 70%)}
-html[data-brand='diambars'] .mobileHeader{
-  background:rgba(7,7,8,.95);border-bottom-color:#321416
-}
+html[data-brand='diambars'] .brand>div:last-child,html[data-brand='elite'] .brand>div:last-child{font-size:0;line-height:1.15}
+html[data-brand='diambars'] .brand>div:last-child b,html[data-brand='diambars'] .brand>div:last-child span,
+html[data-brand='elite'] .brand>div:last-child b,html[data-brand='elite'] .brand>div:last-child span{display:none}
+html[data-brand='diambars'] .brand>div:last-child:before{content:'DIAMBARS FC';font-size:13px;font-weight:950;letter-spacing:.7px;color:#fff}
+html[data-brand='diambars'] .brand>div:last-child:after{content:'PERFORMANCE · MONITORING';font-size:8px;font-weight:850;letter-spacing:1.25px;color:#D71920;margin-top:3px}
+html[data-brand='elite'] .brand>div:last-child:before{content:'HDY ELITE';font-size:13px;font-weight:950;letter-spacing:1px;color:#fff}
+html[data-brand='elite'] .brand>div:last-child:after{content:'INDIVIDUAL PERFORMANCE';font-size:8px;font-weight:800;letter-spacing:1.2px;color:#a1a1aa;margin-top:3px}
+html[data-brand='diambars'] .appShell,html[data-brand='diambars'] .flow{background:radial-gradient(circle at 50% 0,#21090c 0,#080808 27%,#050505 72%)}
+html[data-brand='elite'] .appShell,html[data-brand='elite'] .flow{background:radial-gradient(circle at 50% 0,#252529 0,#0b0b0d 28%,#050506 72%)}
+html[data-brand='diambars'] .mobileHeader{background:rgba(7,7,8,.95);border-bottom-color:#321416}
+html[data-brand='elite'] .mobileHeader{background:rgba(7,7,9,.96);border-bottom-color:#303036}
 html[data-brand='diambars'] .eyebrow{color:#D71920!important}
-html[data-brand='diambars'] .primary{background:#D71920;color:#fff;box-shadow:0 10px 28px rgba(215,25,32,.13)}
+html[data-brand='elite'] .eyebrow{color:#cfcfd5!important}
+html[data-brand='diambars'] .primary{background:#D71920;color:#fff;box-shadow:0 10px 28px rgba(215,25,32,.16)}
+html[data-brand='elite'] .primary{background:linear-gradient(180deg,#fff,#d9d9de);color:#08080a;box-shadow:0 10px 28px rgba(255,255,255,.08)}
 html[data-brand='diambars'] .round{background:#D71920}
+html[data-brand='elite'] .round{background:#f4f4f5;color:#09090b}
 html[data-brand='diambars'] .progress span{background:#D71920}
+html[data-brand='elite'] .progress span{background:#f4f4f5}
 html[data-brand='diambars'] .flowContent input[type=range]{accent-color:#D71920}
+html[data-brand='elite'] .flowContent input[type=range]{accent-color:#f4f4f5}
 html[data-brand='diambars'] .segmented button.selected{background:#D71920;color:#fff;border-color:#D71920}
+html[data-brand='elite'] .segmented button.selected{background:#f4f4f5;color:#09090b;border-color:#f4f4f5}
 html[data-brand='diambars'] .quickGrid button{border-color:#2a181a;background:linear-gradient(145deg,#0d0d0e,#0a0708)}
+html[data-brand='elite'] .quickGrid button{border-color:#2e2e33;background:linear-gradient(145deg,#111114,#09090b)}
 html[data-brand='diambars'] .quickGrid button svg{color:#D71920}
+html[data-brand='elite'] .quickGrid button svg{color:#e5e5e7}
 html[data-brand='diambars'] .bottomNav{border-top-color:#2b1416;background:rgba(7,7,8,.97)}
+html[data-brand='elite'] .bottomNav{border-top-color:#303036;background:rgba(7,7,9,.97)}
 html[data-brand='diambars'] .bottomNav button.active svg{color:#D71920}
+html[data-brand='elite'] .bottomNav button.active svg{color:#fff}
 html[data-brand='diambars'] .actionCard:not(.completed){border-bottom:3px solid #D71920}
+html[data-brand='elite'] .actionCard:not(.completed){border-bottom:3px solid #f4f4f5}
 html[data-brand='diambars'] .loadBox{border-color:#32191b;background:rgba(215,25,32,.025)}
-html[data-brand='diambars'] .profileCard,
-html[data-brand='diambars'] .settings button{border-color:#241516}
+html[data-brand='elite'] .loadBox{border-color:#323238;background:rgba(255,255,255,.025)}
+html[data-brand='diambars'] .profileCard,html[data-brand='diambars'] .settings button{border-color:#241516}
+html[data-brand='elite'] .profileCard,html[data-brand='elite'] .settings button{border-color:#2d2d32}
+
+/* Universal staff frame */
+.adminBrandFrame{min-height:100vh;color:var(--brand-text);background:
+  radial-gradient(circle at 82% -6%,var(--page-glow),transparent 26%),
+  linear-gradient(150deg,var(--brand-bg) 0%,#09090b 48%,var(--brand-bg) 100%);position:relative;isolation:isolate}
+.adminBrandFrame:before{content:'';position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.28;background:
+  linear-gradient(122deg,transparent 0 18%,rgba(255,255,255,.025) 18.2% 18.45%,transparent 18.7% 100%),
+  radial-gradient(circle at 16% 35%,var(--page-glow),transparent 26%)}
+.brand-diambars.adminBrandFrame:after{content:'';position:fixed;right:-120px;top:18%;width:380px;height:52px;background:linear-gradient(90deg,transparent,#D71920 42%,#57070b);transform:rotate(-42deg);opacity:.16;filter:blur(.2px);pointer-events:none;z-index:-1}
+.adminBrandHeader{position:sticky;top:0;z-index:9998;min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px clamp(14px,3vw,28px);background:rgba(7,7,9,.89);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);border-bottom:1px solid color-mix(in srgb,var(--brand-accent) 24%,#242428)}
+.adminBrandIdentity{display:flex;align-items:center;gap:12px;min-width:0;text-decoration:none;color:#fff}.adminBrandLogo{width:48px;height:48px;border-radius:13px;display:grid;place-items:center;overflow:hidden;background:#09090b;border:1px solid var(--brand-border);box-shadow:0 10px 34px var(--page-glow);flex:none}.adminBrandLogo.roundLogo{border-radius:50%;box-shadow:0 0 0 4px rgba(255,255,255,.035),0 10px 34px rgba(255,255,255,.07)}.adminBrandLogo img{width:100%;height:100%;object-fit:cover;display:block}.adminBrandName{display:grid;gap:2px;min-width:0}.adminBrandName strong{font-size:14px;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.adminBrandName small{font-size:9px;letter-spacing:1.25px;color:var(--brand-muted);font-weight:850}.adminBrandActions{display:flex;align-items:center;gap:8px}.adminEnvironmentPill{font-size:8px;letter-spacing:1.25px;font-weight:900;color:var(--page-accent);border:1px solid color-mix(in srgb,var(--page-accent) 28%,#2d2d32);background:rgba(255,255,255,.025);padding:8px 10px;border-radius:999px;white-space:nowrap}.adminInstallLink{font-size:10px;font-weight:900;color:#fff;text-decoration:none;padding:9px 11px;border-radius:10px;background:color-mix(in srgb,var(--brand-accent) 14%,#111114);border:1px solid color-mix(in srgb,var(--brand-accent) 34%,#333338)}
+.adminPageContext{max-width:1240px;margin:0 auto;padding:24px clamp(18px,4vw,42px) 14px;display:grid;grid-template-columns:1fr 180px;gap:18px;align-items:end}.adminPageContext>div{display:grid;gap:4px}.adminPageContext span{font-size:9px;font-weight:950;letter-spacing:1.75px;color:var(--page-accent)}.adminPageContext strong{font-size:clamp(24px,4vw,44px);letter-spacing:-1.6px}.adminPageContext p{margin:0;color:var(--brand-muted);font-size:12px}.adminPageContext i{height:3px;border-radius:99px;background:linear-gradient(90deg,transparent,var(--page-accent));box-shadow:0 0 24px var(--page-glow)}
+.adminBrandContent{position:relative}.adminBrandContent>main{background:transparent!important}.adminBrandContent main a,.adminBrandContent main button{transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}.adminBrandContent main a:hover{transform:translateY(-1px)}
+.adminBrandContent [style*="background:#141416"],.adminBrandContent [style*="background: '#141416'"]{box-shadow:0 14px 40px rgba(0,0,0,.12)}
+.adminBrandFooter{padding:18px 20px 24px;text-align:center;color:var(--brand-muted);font-size:8px;font-weight:850;letter-spacing:1.55px;border-top:1px solid rgba(255,255,255,.035)}
+
+/* Page-specific atmosphere */
+html[data-page='administration'] .adminBrandFrame{background:radial-gradient(circle at 15% 10%,rgba(239,68,68,.09),transparent 24%),linear-gradient(150deg,#050506,#0b0b0d 55%,#050506)}
+html[data-page='sport'] .adminBrandFrame,html[data-page='gps'] .adminBrandFrame{background:radial-gradient(circle at 84% 9%,rgba(215,25,32,.15),transparent 27%),linear-gradient(145deg,#050304,#0b0809 55%,#050304)}
+html[data-page='staff'] .adminBrandFrame{background:radial-gradient(circle at 80% 8%,rgba(255,255,255,.07),transparent 24%),linear-gradient(150deg,#050506,#0b0b0d)}
+html[data-page='dashboard'] .adminBrandFrame{background:radial-gradient(circle at 82% 8%,rgba(163,230,53,.07),transparent 22%),linear-gradient(150deg,#050506,#0a0b09)}
+html[data-page='results'] .adminBrandFrame{background:radial-gradient(circle at 82% 8%,rgba(96,165,250,.08),transparent 22%),linear-gradient(150deg,#050506,#080a0d)}
+html[data-page='comparator'] .adminBrandFrame{background:radial-gradient(circle at 82% 8%,rgba(245,158,11,.08),transparent 22%),linear-gradient(150deg,#050506,#0c0a07)}
+
+@media(max-width:760px){
+  .adminBrandHeader{min-height:68px;padding:9px 12px}.adminBrandLogo{width:42px;height:42px}.adminBrandName strong{font-size:12px}.adminBrandName small{font-size:7.5px}.adminEnvironmentPill{display:none}.adminInstallLink{padding:8px 10px}.adminPageContext{padding:18px 16px 8px;grid-template-columns:1fr}.adminPageContext i{width:100px}.adminPageContext p{font-size:11px}.adminBrandContent>main{padding-top:18px!important}
+}
