@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 
-const V = '20260906-ios5';
+const V = '20260907-ios6';
 
 export const metadata: Metadata = {
   title: 'Diambars FC',
