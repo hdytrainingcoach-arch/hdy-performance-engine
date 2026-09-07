@@ -13,8 +13,8 @@ export async function GET(){
     theme_color:'#050506',
     orientation:'portrait-primary',
     icons:[
-      {src:'/pwa/hdy-icon-192.png?v=20260907-elite-final',sizes:'192x192',type:'image/png',purpose:'any'},
-      {src:'/pwa/hdy-icon-512.png?v=20260907-elite-final',sizes:'512x512',type:'image/png',purpose:'any'}
+      {src:'/pwa/elite-icon-192.png?v=20260907-elite-final',sizes:'192x192',type:'image/png',purpose:'any'},
+      {src:'/pwa/elite-icon-512.png?v=20260907-elite-final',sizes:'512x512',type:'image/png',purpose:'any'}
     ]
   },{headers:{'Content-Type':'application/manifest+json','Cache-Control':'no-store'}});
 }
