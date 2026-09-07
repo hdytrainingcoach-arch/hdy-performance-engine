@@ -5,6 +5,7 @@ import './globals.css';
 import './brand-themes.css';
 import './player-da.css';
 import './brand-fixes.css';
+import './logo-system.css';
 
 export const metadata: Metadata = {
   title: 'HDY Performance Engine',
