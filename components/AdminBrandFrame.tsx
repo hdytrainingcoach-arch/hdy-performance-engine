@@ -64,7 +64,7 @@ export default function AdminBrandFrame({children}:{children:React.ReactNode}){
   const brand=mode==='neutral'||mode==='loading'?'hdy':mode;
   const isDiambars=brand==='diambars';
   const isElite=brand==='elite';
-  const logo=isDiambars?'/pwa/diambars-icon-192.png?v=visual-final':isElite?'/pwa/hdy-icon-192.png?v=elite-final':'/pwa/hdy-icon-192.png?v=hdy-final';
+  const logo=isDiambars?'/pwa/diambars-icon-192.png?v=visual-final':isElite?'/pwa/elite-icon-192.png?v=elite-final':'/pwa/hdy-icon-192.png?v=hdy-final';
   const title=isDiambars?'DIAMBARS FC':isElite?'HDY ELITE':'HDY PERFORMANCE ENGINE';
   const subtitle=isDiambars?'CELLULE PERFORMANCE · STAFF':isElite?'INDIVIDUAL PERFORMANCE':'GLOBAL PERFORMANCE SYSTEM';
   const installHref=isDiambars?'/diambars':isElite?'/elite':'/hdy';
