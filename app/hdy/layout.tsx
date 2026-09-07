@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 
-const V = '20260906-ios5';
+const V = '20260907-ios7';
 
 export const metadata: Metadata = {
   title: 'HDY Performance Engine',
-  description: 'Plateforme globale — monitoring, performance et data.',
+  description: 'Plateforme globale — monitoring, performance, data et athlete management.',
   applicationName: 'HDY Performance Engine',
   manifest: `/hdy.webmanifest?v=${V}`,
   appleWebApp: { capable: true, title: 'HDY Performance', statusBarStyle: 'black-translucent' },
