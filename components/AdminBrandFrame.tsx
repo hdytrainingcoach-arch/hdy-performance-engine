@@ -1,13 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
 const DIAMBARS='d3136b7f-ef28-43e8-af53-30fa6de70c62';
 const ELITE='5454ad8f-8f2b-4812-9923-ab7d0b1f8748';
 type BrandMode='loading'|'hdy'|'diambars'|'elite'|'neutral';
-
 type PageIdentity={key:string;label:string;eyebrow:string;description:string};
 
 function pageIdentity(path:string):PageIdentity{
@@ -28,16 +27,14 @@ function pageIdentity(path:string):PageIdentity{
 export default function AdminBrandFrame({children}:{children:React.ReactNode}){
   const [mode,setMode]=useState<BrandMode>('loading');
   const pathname=usePathname()||'/admin';
-  const searchParams=useSearchParams();
   const identity=useMemo(()=>pageIdentity(pathname),[pathname]);
 
   useEffect(()=>{
     let cancelled=false;
     (async()=>{
-      const requested=searchParams.get('app');
-      if(requested==='diambars'||requested==='hdy'||requested==='elite'){
-        localStorage.setItem('hdy-app-mode',requested);
-      }
+      const params=new URLSearchParams(window.location.search);
+      const requested=params.get('app');
+      if(requested==='diambars'||requested==='hdy'||requested==='elite') localStorage.setItem('hdy-app-mode',requested);
       const stored=(requested||localStorage.getItem('hdy-app-mode')) as 'diambars'|'hdy'|'elite'|null;
       const {data:{session}}=await supabase.auth.getSession();
       if(cancelled)return;
@@ -53,14 +50,14 @@ export default function AdminBrandFrame({children}:{children:React.ReactNode}){
       setMode(stored||'neutral');
     })();
     return()=>{cancelled=true};
-  },[searchParams]);
+  },[pathname]);
 
   useEffect(()=>{
     if(mode==='loading')return;
     const brand=mode==='neutral'?'hdy':mode;
     document.documentElement.dataset.brand=brand;
     document.documentElement.dataset.page=identity.key;
-    document.documentElement.style.setProperty('--brand-accent',brand==='diambars'?'#D71920':brand==='elite'?'#F4F4F5':'#F4F4F5');
+    document.documentElement.style.setProperty('--brand-accent',brand==='diambars'?'#D71920':'#F4F4F5');
     return()=>{delete document.documentElement.dataset.page};
   },[mode,identity.key]);
 
@@ -78,21 +75,9 @@ export default function AdminBrandFrame({children}:{children:React.ReactNode}){
         <span className={`adminBrandLogo ${isElite?'roundLogo':''}`}><img src={logo} alt={title}/></span>
         <span className='adminBrandName'><strong>{title}</strong><small>{subtitle}</small></span>
       </a>
-      <div className='adminBrandActions'>
-        <span className='adminEnvironmentPill'>{identity.eyebrow}</span>
-        <a href={installHref} className='adminInstallLink'>Installer</a>
-      </div>
+      <div className='adminBrandActions'><span className='adminEnvironmentPill'>{identity.eyebrow}</span><a href={installHref} className='adminInstallLink'>Installer</a></div>
     </header>
-
-    <section className={`adminPageContext page-${identity.key}`}>
-      <div>
-        <span>{identity.eyebrow}</span>
-        <strong>{identity.label}</strong>
-        <p>{identity.description}</p>
-      </div>
-      <i aria-hidden='true'/>
-    </section>
-
+    <section className={`adminPageContext page-${identity.key}`}><div><span>{identity.eyebrow}</span><strong>{identity.label}</strong><p>{identity.description}</p></div><i aria-hidden='true'/></section>
     <div className='adminBrandContent'>{children}</div>
     <footer className='adminBrandFooter'>{isDiambars?'POWERED BY HDY PERFORMANCE ENGINE':isElite?'HDY ELITE · POWERED BY HDY PERFORMANCE ENGINE':'HDY PERFORMANCE ENGINE · A BETTER GAME GLOBALLY'}</footer>
   </div>
