@@ -23,9 +23,9 @@ export default function PWARegister() {
 
     const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
 
-    // iOS Add to Home Screen does not need our service worker. During the pilot,
-    // remove stale registrations/caches so Safari cannot resurrect old branding assets.
     if(isIOS){
+      // iOS installation is handled through Safari's native Share sheet.
+      // Remove stale PWA state, but do not add a floating install control over the brand screen.
       if('serviceWorker' in navigator){
         navigator.serviceWorker.getRegistrations().then(regs=>Promise.all(regs.map(reg=>reg.unregister()))).catch(()=>undefined);
       }
@@ -43,12 +43,11 @@ export default function PWARegister() {
       return;
     }
 
-    if(isIOS)setVisible(true);
-
     const onBeforeInstall=(event:Event)=>{
+      // Android/desktop only: use the browser install prompt when available.
       event.preventDefault();
       setInstallEvent(event as BeforeInstallPromptEvent);
-      setVisible(true);
+      if(!isIOS)setVisible(true);
     };
     const onInstalled=()=>{setVisible(false);setInstallEvent(null);setShowIOSHelp(false)};
     window.addEventListener('beforeinstallprompt',onBeforeInstall);
@@ -75,7 +74,7 @@ export default function PWARegister() {
   const label=club?'Installer Diambars':'Installer HDY';
 
   return <>
-    {visible&&<button type='button' onClick={install} aria-label={label} style={{position:'fixed',right:16,bottom:18,zIndex:9999,border:'1px solid #3F3F46',borderRadius:999,background:club?'#D71920':'#111113',color:'#fff',padding:'11px 15px',fontWeight:900,boxShadow:'0 10px 30px rgba(0,0,0,.35)',cursor:'pointer'}}>{label}</button>}
+    {visible&&<button type='button' onClick={install} aria-label={label} style={{position:'fixed',right:16,bottom:'max(18px,env(safe-area-inset-bottom))',zIndex:9999,border:'1px solid #3F3F46',borderRadius:999,background:club?'#D71920':'#111113',color:'#fff',padding:'11px 15px',fontWeight:900,boxShadow:'0 10px 30px rgba(0,0,0,.35)',cursor:'pointer'}}>{label}</button>}
     {showIOSHelp&&<div role='dialog' aria-modal='true' style={{position:'fixed',inset:0,zIndex:10000,background:'rgba(0,0,0,.72)',display:'grid',placeItems:'end center',padding:16}} onClick={()=>setShowIOSHelp(false)}>
       <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:460,background:'#111113',color:'#fff',border:'1px solid #2B2B31',borderRadius:20,padding:20}}>
         <strong style={{display:'block',fontSize:20,marginBottom:8}}>{club?'Installer Diambars FC':'Installer HDY Performance'}</strong>
