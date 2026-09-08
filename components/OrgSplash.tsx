@@ -63,7 +63,9 @@ export default function OrgSplash(){
   if(!visible||!brand)return null;
   const club=brand==='diambars';
   const elite=brand==='elite';
-  const splash=club?`/pwa/diambars-splash.webp?v=${V}`:elite?null:`/pwa/hdy-splash.webp?v=${V}`;
+  // TODO: diambars-splash.webp et hdy-splash.webp sources corrompues (base64 tronqué) — désactivées ici,
+  // fallback propre sur dégradé+icône (comme elite) en attendant un nouvel asset source.
+  const splash:string|null=null;
   const icon=club?`/pwa/diambars-icon-512.png?v=${V}`:elite?`/pwa/elite-icon-512.png?v=20260907-elite-final`:`/pwa/hdy-icon-512.png?v=${V}`;
   const title=club?'DIAMBARS FC':elite?'HDY ELITE':'HDY PERFORMANCE ENGINE';
   const sub=club?'Performance · Monitoring · Médical · Suivi joueur':elite?'Individual Performance · Monitoring · Progression':'Monitoring · Performance · Data';
