@@ -19,7 +19,7 @@ function pageIdentity(path:string):PageIdentity{
   if(path.startsWith('/admin/sport/comparator')) return {key:'comparator',label:'Comparatif',eyebrow:'PROFILES · TALENT',description:'Comparer les profils athlétiques pour éclairer la décision staff.'};
   if(path.startsWith('/admin/sport/monitoring')||path.startsWith('/admin/workspace')) return {key:'dashboard',label:'Dashboard',eyebrow:'MONITORING · DECISION',description:'Disponibilité, Hooper, RPE, douleur, GPS, alertes et tendances.'};
   if(path.startsWith('/admin/sport/alerts')) return {key:'alerts',label:'Alertes',eyebrow:'REVIEW · CONTEXT',description:'Signaux à revoir par le staff, sans diagnostic automatique.'};
-  if(path.startsWith('/admin/sport/hrv')) return {key:'recovery',label:'Récupération & HRV',eyebrow:'RECOVERY · READINESS',description:'Suivi récupération et mesures HRV lorsque ce module est activé.'};
+  if(path.startsWith('/admin/sport/hrv')) return {key:'recovery',label:'Récupération & HRV',eyebrow:'HDY ELITE · READINESS',description:'Suivi récupération et mesures HRV, spécifique à HDY Elite.'};
   if(path.startsWith('/admin/sport/sessions')) return {key:'sessions',label:'Séances',eyebrow:'TRAINING · PLANNING',description:'Planifier les séances et relier les données de charge au bon contexte.'};
   if(path.startsWith('/admin/sport')) return {key:'sport',label:'Sport & Performance',eyebrow:'PERFORMANCE · OPERATIONS',description:'Charge, préparation, séances, alertes, GPS, tests et monitoring.'};
   return {key:'home',label:'Centre de gestion',eyebrow:'PERFORMANCE · PEOPLE · PROGRESS',description:'Piloter les organisations et les environnements de performance.'};
