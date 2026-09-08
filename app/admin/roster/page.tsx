@@ -16,6 +16,8 @@ type Player = {
   photo_url:string|null;
   team_id:string|null;
   category:string|null;
+  email:string|null;
+  user_id:string|null;
 };
 
 const DIAMBARS='d3136b7f-ef28-43e8-af53-30fa6de70c62';
@@ -41,13 +43,30 @@ export default function RosterPage(){
     if(!profile?.is_super_admin && !(membership?.length)){setReady(true);return;}
     setAuthorized(true);
     const {data,error:e}=await supabase.from('players')
-      .select('id,display_name,first_name,last_name,birth_year,position,primary_position,status,observation,photo_url,team_id,category')
+      .select('id,display_name,first_name,last_name,birth_year,position,primary_position,status,observation,photo_url,team_id,category,email,user_id')
       .eq('organization_id',DIAMBARS)
       .eq('active',true)
       .order('display_name');
     if(e)setError(e.message); else setPlayers((data||[]) as Player[]);
     setReady(true);
   })()},[]);
+
+  const [invites,setInvites]=useState<Record<string,string>>({});
+  const [invitingId,setInvitingId]=useState('');
+  const [inviteMsg,setInviteMsg]=useState<Record<string,string>>({});
+
+  async function sendInvite(p:Player){
+    setInvitingId(p.id);setInviteMsg(m=>({...m,[p.id]:''}));
+    const {data,error:e}=await supabase.rpc('create_player_invite',{p_player_id:p.id,p_email:p.email||null,p_expires_days:14});
+    setInvitingId('');
+    if(e){setInviteMsg(m=>({...m,[p.id]:e.message}));return}
+    const row=Array.isArray(data)?data[0]:data;
+    if(!row?.token){setInviteMsg(m=>({...m,[p.id]:'Invitation créée mais lien indisponible.'}));return}
+    const link=`${window.location.origin}/join/player?token=${encodeURIComponent(row.token)}`;
+    setInvites(m=>({...m,[p.id]:link}));
+    setInviteMsg(m=>({...m,[p.id]:'Invitation créée ✓'}));
+  }
+  async function copyInvite(id:string){const link=invites[id];if(!link)return;await navigator.clipboard.writeText(link);setInviteMsg(m=>({...m,[id]:'Lien copié ✓'}))}
 
   const filtered=useMemo(()=>players.filter(p=>`${p.display_name||''} ${p.first_name} ${p.last_name} ${p.position||''} ${p.primary_position||''} ${p.observation||''}`.toLowerCase().includes(search.toLowerCase())),[players,search]);
 
@@ -80,6 +99,12 @@ export default function RosterPage(){
                 <div style={S.nameRow}><h3 style={S.name}>{p.display_name||`${p.first_name} ${p.last_name}`}</h3><span style={{...S.status,background:injured?'#3A1416':'#13331F',color:injured?'#FF8A8F':'#8EF0B0'}}>{injured?'Indisponible':'Disponible'}</span></div>
                 <div style={S.meta}>{p.birth_year||'—'} · {p.primary_position||p.position||'Poste à compléter'}</div>
                 {p.observation&&<p style={{...S.note,color:injured?'#FFB5B8':'#A1A1AA'}}>{p.observation}</p>}
+                {p.user_id
+                  ? <span style={S.accountOk}>Compte actif</span>
+                  : invites[p.id]
+                    ? <div style={S.inviteBox}><code style={S.inviteCode}>{invites[p.id]}</code><button style={S.ghostSm} onClick={()=>copyInvite(p.id)}>Copier</button></div>
+                    : <button style={S.inviteBtn} disabled={invitingId===p.id} onClick={()=>sendInvite(p)}>{invitingId===p.id?'Création…':'Envoyer une invitation'}</button>}
+                {inviteMsg[p.id]&&<small style={S.inviteMsg}>{inviteMsg[p.id]}</small>}
               </div>
             </article>
           })}</div>
@@ -116,5 +141,11 @@ const S:Record<string,React.CSSProperties>={
   status:{fontSize:10,fontWeight:900,borderRadius:999,padding:'5px 8px',whiteSpace:'nowrap'},
   meta:{fontSize:12,color:'#D4D4D8',marginTop:5},
   note:{fontSize:11,margin:'6px 0 0',lineHeight:1.35},
-  error:{maxWidth:1280,margin:'0 auto 12px',background:'#3A1416',color:'#FFB5B8',borderRadius:10,padding:10}
+  error:{maxWidth:1280,margin:'0 auto 12px',background:'#3A1416',color:'#FFB5B8',borderRadius:10,padding:10},
+  accountOk:{display:'inline-block',marginTop:6,fontSize:10,fontWeight:900,color:'#8EF0B0',background:'#13331F',borderRadius:999,padding:'4px 8px'},
+  inviteBtn:{marginTop:7,height:32,border:'1px solid #3F3F46',borderRadius:8,background:'#1A1A1D',color:'#fff',fontWeight:800,fontSize:12,padding:'0 10px',cursor:'pointer'},
+  inviteBox:{marginTop:7,display:'flex',gap:6,alignItems:'center',minWidth:0},
+  inviteCode:{fontSize:10,color:'#A1A1AA',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1},
+  ghostSm:{height:28,border:'1px solid #3F3F46',borderRadius:7,background:'#1A1A1D',color:'#fff',fontWeight:800,fontSize:11,padding:'0 8px',flex:'0 0 auto'},
+  inviteMsg:{display:'block',marginTop:4,color:'#A1A1AA',fontSize:11}
 };
