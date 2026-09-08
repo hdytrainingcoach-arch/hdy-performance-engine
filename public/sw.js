@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hdy-static-v6-core';
+const CACHE_NAME = 'hdy-static-v7-core';
 const STATIC_ASSETS = ['/offline.html'];
 
 self.addEventListener('install', event => {
@@ -25,7 +25,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  if (url.pathname.startsWith('/pwa/') || url.pathname.endsWith('.webmanifest')) {
+  if (url.pathname.startsWith('/branding/') || url.pathname.endsWith('.webmanifest')) {
     event.respondWith(fetch(request));
     return;
   }

@@ -10,7 +10,7 @@ html[data-brand='elite'] .brand .mark{
   background-color:#08080a!important;
 }
 html[data-brand='elite'] .brand .mark{
-  background-image:url('/pwa/elite-icon-192.png?v=20260907-elite-final')!important;
+  background-image:url('/branding/elite/icon-192.png?v=static-v1')!important;
 }
 
 /* Staff header logo: treat it as a brand mark, not a tiny app icon. */

@@ -21,17 +21,17 @@ html[data-page='sessions']{--page-accent:#c084fc}
 
 /* Player application branding */
 html[data-brand='hdy'] .brand .mark{
-  font-size:0;color:transparent;background:#050505 url('/pwa/hdy-icon-192.png?v=hdy-final') center/cover no-repeat;
+  font-size:0;color:transparent;background:#050505 url('/branding/hdy/icon-192.png?v=static-v1') center/cover no-repeat;
   border-color:#2f2f33;box-shadow:0 8px 26px rgba(0,0,0,.32)
 }
 html[data-brand='diambars'] body{background:#050304}
 html[data-brand='diambars'] .brand .mark{
-  font-size:0;color:transparent;background:#080808 url('/pwa/diambars-icon-192.png?v=visual-final') center/cover no-repeat;
+  font-size:0;color:transparent;background:#080808 url('/branding/diambars/icon-192.png?v=static-v1') center/cover no-repeat;
   border-color:#4A1719;box-shadow:0 8px 28px rgba(215,25,32,.18)
 }
 html[data-brand='elite'] .brand .mark{
   width:44px;height:44px;border-radius:50%;font-size:0;color:transparent;
-  background:#080809 url('/pwa/hdy-icon-192.png?v=elite-final') center/cover no-repeat;
+  background:#080809 url('/branding/elite/icon-192.png?v=static-v1') center/cover no-repeat;
   border:2px solid #dedee3;box-shadow:0 0 0 5px rgba(255,255,255,.035),0 8px 28px rgba(0,0,0,.28)
 }
 html[data-brand='diambars'] .brand>div:last-child,html[data-brand='elite'] .brand>div:last-child{font-size:0;line-height:1.15}
