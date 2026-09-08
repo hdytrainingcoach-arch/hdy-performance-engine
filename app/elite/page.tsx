@@ -12,7 +12,7 @@ export default function EliteInstall(){
     localStorage.setItem('hdy-app-mode','elite');document.documentElement.dataset.brand='elite';document.title='HDY Elite';
     forceMeta('application-name','HDY Elite');forceMeta('apple-mobile-web-app-title','HDY Elite');forceMeta('apple-mobile-web-app-capable','yes');forceMeta('mobile-web-app-capable','yes');forceMeta('theme-color','#050506');
     document.querySelectorAll('link[rel="manifest"],link[rel="icon"],link[rel="shortcut icon"],link[rel="apple-touch-icon"]').forEach(n=>n.remove());
-    addLink('manifest',`/elite.webmanifest?v=${V}`,'application/manifest+json');addLink('icon',`/pwa/elite-icon-192.png?v=${V}`,'image/png');addLink('shortcut icon',`/pwa/elite-icon-192.png?v=${V}`,'image/png');addLink('apple-touch-icon',`/pwa/elite-apple-touch-icon.png?v=${V}`,'image/png');
+    addLink('manifest',`/elite.webmanifest?v=${V}`,'application/manifest+json');addLink('icon','/branding/elite/icon-192.png?v=static-v1','image/png');addLink('shortcut icon','/branding/elite/icon-192.png?v=static-v1','image/png');addLink('apple-touch-icon','/branding/elite/apple-touch-icon.png?v=static-v1','image/png');
   },[]);
 
   return <main style={S.main}>

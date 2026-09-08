@@ -14,7 +14,7 @@ export default function DiambarsInstall(){
     document.title='Diambars FC';
     forceMeta('application-name','Diambars FC');forceMeta('apple-mobile-web-app-title','Diambars FC');forceMeta('apple-mobile-web-app-capable','yes');forceMeta('mobile-web-app-capable','yes');forceMeta('theme-color','#D71920');
     document.querySelectorAll('link[rel="manifest"],link[rel="icon"],link[rel="shortcut icon"],link[rel="apple-touch-icon"]').forEach(n=>n.remove());
-    addLink('manifest',`/diambars.webmanifest?v=${V}`,'application/manifest+json');addLink('icon',`/pwa/diambars-icon-192.png?v=${V}`,'image/png');addLink('shortcut icon',`/pwa/diambars-icon-192.png?v=${V}`,'image/png');addLink('apple-touch-icon',`/pwa/diambars-apple-touch-icon.png?v=${V}`,'image/png');
+    addLink('manifest',`/diambars.webmanifest?v=${V}`,'application/manifest+json');addLink('icon','/branding/diambars/icon-192.png?v=static-v1','image/png');addLink('shortcut icon','/branding/diambars/icon-192.png?v=static-v1','image/png');addLink('apple-touch-icon','/branding/diambars/apple-touch-icon.png?v=static-v1','image/png');
   },[]);
 
   return <main style={S.main}>
@@ -37,7 +37,7 @@ export default function DiambarsInstall(){
 
 const S:Record<string,React.CSSProperties>={
   main:{minHeight:'100dvh',position:'relative',overflow:'hidden',background:'#020202',color:'#fff',fontFamily:'Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif'},
-  art:{position:'absolute',inset:0,backgroundImage:`url('/pwa/diambars-splash.webp?v=${V}')`,backgroundSize:'cover',backgroundPosition:'center center',backgroundRepeat:'no-repeat',opacity:.24,filter:'saturate(.85) contrast(1.08)'},
+  art:{position:'absolute',inset:0,/* fond splash désactivé : asset source corrompu, en attente d'un nouveau visuel */backgroundSize:'cover',backgroundPosition:'center center',backgroundRepeat:'no-repeat',opacity:.24,filter:'saturate(.85) contrast(1.08)'},
   veil:{position:'absolute',inset:0,background:'radial-gradient(circle at 50% 36%,rgba(215,25,32,.18),transparent 28%),linear-gradient(180deg,rgba(0,0,0,.20),rgba(0,0,0,.58))'},
   fade:{position:'absolute',inset:0,background:'linear-gradient(180deg,transparent 0%,transparent 67%,rgba(0,0,0,.62) 82%,#020202 100%)',pointerEvents:'none'},
   dock:{position:'absolute',zIndex:3,left:16,right:16,bottom:'max(14px,env(safe-area-inset-bottom))',maxWidth:520,margin:'0 auto',display:'grid',gap:9,padding:'12px',borderRadius:22,background:'rgba(7,7,8,.72)',border:'1px solid rgba(255,255,255,.08)',boxShadow:'0 18px 55px rgba(0,0,0,.42)',backdropFilter:'blur(18px)',WebkitBackdropFilter:'blur(18px)'},

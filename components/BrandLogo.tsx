@@ -6,9 +6,9 @@ export type BrandKind='diambars'|'hdy'|'elite';
 type LogoVariant='header'|'page'|'hero'|'player';
 
 const CONFIG:Record<BrandKind,{src192:string;src512:string;label:string;fallback:string;shape:'round'|'square'}>={
-  diambars:{src192:'/pwa/diambars-icon-192.png?v=logo-system-v2',src512:'/pwa/diambars-icon-512.png?v=logo-system-v2',label:'Diambars FC',fallback:'DFC',shape:'round'},
-  hdy:{src192:'/pwa/hdy-icon-192.png?v=logo-system-v2',src512:'/pwa/hdy-icon-512.png?v=logo-system-v2',label:'HDY Performance Engine',fallback:'HDY',shape:'square'},
-  elite:{src192:'/pwa/elite-icon-192.png?v=logo-system-v2',src512:'/pwa/elite-icon-512.png?v=logo-system-v2',label:'HDY Elite',fallback:'HDY',shape:'round'},
+  diambars:{src192:'/branding/diambars/icon-192.png?v=static-v1',src512:'/branding/diambars/icon-512.png?v=static-v1',label:'Diambars FC',fallback:'DFC',shape:'round'},
+  hdy:{src192:'/branding/hdy/icon-192.png?v=static-v1',src512:'/branding/hdy/icon-512.png?v=static-v1',label:'HDY Performance Engine',fallback:'HDY',shape:'square'},
+  elite:{src192:'/branding/elite/icon-192.png?v=static-v1',src512:'/branding/elite/icon-512.png?v=static-v1',label:'HDY Elite',fallback:'HDY',shape:'round'},
 };
 
 export default function BrandLogo({brand,variant='header',decorative=false,className=''}:{brand:BrandKind;variant?:LogoVariant;decorative?:boolean;className?:string}){

@@ -10,10 +10,10 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: 'HDY Performance', statusBarStyle: 'black-translucent' },
   icons: {
     icon: [
-      { url: `/pwa/hdy-icon-192.png?v=${V}`, sizes: '192x192', type: 'image/png' },
-      { url: `/pwa/hdy-icon-512.png?v=${V}`, sizes: '512x512', type: 'image/png' },
+      { url: '/branding/hdy/icon-192.png?v=static-v1', sizes: '192x192', type: 'image/png' },
+      { url: '/branding/hdy/icon-512.png?v=static-v1', sizes: '512x512', type: 'image/png' },
     ],
-    apple: [{ url: `/pwa/hdy-apple-touch-icon.png?v=${V}`, sizes: '192x192', type: 'image/png' }],
+    apple: [{ url: '/branding/hdy/apple-touch-icon.png?v=static-v1', sizes: '180x180', type: 'image/png' }],
   },
 };
 

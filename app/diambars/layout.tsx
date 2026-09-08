@@ -10,10 +10,10 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: 'Diambars FC', statusBarStyle: 'black-translucent' },
   icons: {
     icon: [
-      { url: `/pwa/diambars-icon-192.png?v=${V}`, sizes: '192x192', type: 'image/png' },
-      { url: `/pwa/diambars-icon-512.png?v=${V}`, sizes: '512x512', type: 'image/png' },
+      { url: '/branding/diambars/icon-192.png?v=static-v1', sizes: '192x192', type: 'image/png' },
+      { url: '/branding/diambars/icon-512.png?v=static-v1', sizes: '512x512', type: 'image/png' },
     ],
-    apple: [{ url: `/pwa/diambars-apple-touch-icon.png?v=${V}`, sizes: '192x192', type: 'image/png' }],
+    apple: [{ url: '/branding/diambars/apple-touch-icon.png?v=static-v1', sizes: '180x180', type: 'image/png' }],
   },
 };
 

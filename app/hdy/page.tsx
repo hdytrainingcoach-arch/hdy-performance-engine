@@ -12,7 +12,7 @@ export default function HDYInstall(){
     localStorage.setItem('hdy-app-mode','hdy');document.documentElement.dataset.brand='hdy';document.title='HDY Performance Engine';
     forceMeta('application-name','HDY Performance Engine');forceMeta('apple-mobile-web-app-title','HDY Performance');forceMeta('apple-mobile-web-app-capable','yes');forceMeta('mobile-web-app-capable','yes');forceMeta('theme-color','#050505');
     document.querySelectorAll('link[rel="manifest"],link[rel="icon"],link[rel="shortcut icon"],link[rel="apple-touch-icon"]').forEach(n=>n.remove());
-    addLink('manifest',`/hdy.webmanifest?v=${V}`,'application/manifest+json');addLink('icon',`/pwa/hdy-icon-192.png?v=${V}`,'image/png');addLink('shortcut icon',`/pwa/hdy-icon-192.png?v=${V}`,'image/png');addLink('apple-touch-icon',`/pwa/hdy-apple-touch-icon.png?v=${V}`,'image/png');
+    addLink('manifest',`/hdy.webmanifest?v=${V}`,'application/manifest+json');addLink('icon','/branding/hdy/icon-192.png?v=static-v1','image/png');addLink('shortcut icon','/branding/hdy/icon-192.png?v=static-v1','image/png');addLink('apple-touch-icon','/branding/hdy/apple-touch-icon.png?v=static-v1','image/png');
   },[]);
 
   return <main style={S.main}>
@@ -35,7 +35,7 @@ export default function HDYInstall(){
 
 const S:Record<string,React.CSSProperties>={
   main:{minHeight:'100dvh',position:'relative',overflow:'hidden',background:'#020202',color:'#fff',fontFamily:'Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif'},
-  art:{position:'absolute',inset:0,backgroundImage:`url('/pwa/hdy-splash.webp?v=${V}')`,backgroundSize:'cover',backgroundPosition:'center center',backgroundRepeat:'no-repeat',opacity:.22,filter:'contrast(1.08)'},
+  art:{position:'absolute',inset:0,/* fond splash désactivé : asset source corrompu, en attente d'un nouveau visuel */backgroundSize:'cover',backgroundPosition:'center center',backgroundRepeat:'no-repeat',opacity:.22,filter:'contrast(1.08)'},
   veil:{position:'absolute',inset:0,background:'radial-gradient(circle at 50% 36%,rgba(255,255,255,.11),transparent 28%),linear-gradient(180deg,rgba(0,0,0,.18),rgba(0,0,0,.58))'},
   fade:{position:'absolute',inset:0,background:'linear-gradient(180deg,transparent 0%,transparent 67%,rgba(0,0,0,.60) 83%,#020202 100%)',pointerEvents:'none'},
   dock:{position:'absolute',zIndex:3,left:16,right:16,bottom:'max(14px,env(safe-area-inset-bottom))',maxWidth:520,margin:'0 auto',display:'grid',gap:9,padding:'12px',borderRadius:22,background:'rgba(10,10,12,.72)',border:'1px solid rgba(255,255,255,.09)',boxShadow:'0 18px 55px rgba(0,0,0,.42)',backdropFilter:'blur(18px)',WebkitBackdropFilter:'blur(18px)'},
