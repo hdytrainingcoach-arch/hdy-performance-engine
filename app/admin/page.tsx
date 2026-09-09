@@ -1,10 +1,5 @@
 export default function AdminHome(){
   return <main style={S.main}>
-    <section style={S.hero}>
-      <span style={S.kicker}>ESPACE PERFORMANCE · MOTEUR COMMUN</span>
-      <h1 style={S.h1}>Centre de gestion</h1>
-      <p style={S.p}>Choisis ton espace. L’identité de l’organisation reste prioritaire, avec HDY Performance Engine comme moteur technologique commun.</p>
-    </section>
     <section style={S.grid}>
       <a href='/admin/administration' style={S.card}><span style={S.tag}>ADMINISTRATION</span><h2>Administration</h2><p>Organisation, joueurs, équipes, staff, rôles, permissions et accès.</p><b>Entrer →</b></a>
       <a href='/admin/sport' style={S.card}><span style={S.tag}>SPORT & PERFORMANCE</span><h2>Sport & Performance</h2><p>Séances, tests, monitoring Hooper/RPE/douleur, GPS, alertes et comparatif.</p><b>Entrer →</b></a>
