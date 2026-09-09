@@ -42,7 +42,13 @@ export default function AdminBrandFrame({children}:{children:React.ReactNode}){
       if(!session){setMode(stored||'neutral');return;}
 
       const {data:profile}=await supabase.from('profiles').select('is_super_admin').eq('user_id',session.user.id).maybeSingle();
-      if(profile?.is_super_admin){setMode(stored||'hdy');return;}
+      if(profile?.is_super_admin){
+        // Le portail général (/admin) ne doit jamais rester bloqué sur la dernière
+        // marque visitée en localStorage : c'est le centre de gestion neutre, pas
+        // l'espace d'une organisation en particulier.
+        if(pathname==='/admin'&&!requested){localStorage.setItem('hdy-app-mode','hdy');setMode('hdy');return}
+        setMode(stored||'hdy');return;
+      }
 
       const {data:members}=await supabase.from('memberships').select('organization_id,active').eq('user_id',session.user.id);
       const active=(members||[]).filter(m=>m.active!==false);
