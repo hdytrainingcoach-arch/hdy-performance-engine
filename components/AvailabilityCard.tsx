@@ -29,8 +29,10 @@ const REASONS: { key: string; label: string }[] = [
   { key: 'personnel', label: 'Personnel' },
   { key: 'autre', label: 'Autre' },
 ];
-const STATUS_LABEL: Record<string, string> = Object.fromEntries(STATUSES.map((s) => [s.key, s.label]));
-const REASON_LABEL: Record<string, string> = Object.fromEntries(REASONS.map((r) => [r.key, r.label]));
+const STATUS_LABEL: Record<string, string> = {};
+STATUSES.forEach((s) => { STATUS_LABEL[s.key] = s.label; });
+const REASON_LABEL: Record<string, string> = {};
+REASONS.forEach((r) => { REASON_LABEL[r.key] = r.label; });
 
 function isoFor(day: 'today' | 'tomorrow') {
   const d = new Date();
