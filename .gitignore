@@ -13,3 +13,6 @@ node_modules
 # Supabase CLI
 supabase/.branches
 supabase/.temp
+
+# Next.js généré
+next-env.d.ts
