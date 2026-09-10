@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { checkPassword } from '@/lib/password';
 
 type Invite={player_id:string;display_name:string|null;email:string;expires_at:string;used:boolean};
 
@@ -37,7 +38,8 @@ export default function PlayerJoinPage(){
   async function activate(e:React.FormEvent){
     e.preventDefault(); setMsg('');
     if(!invite)return;
-    if(password.length<8){setMsg('Le mot de passe doit contenir au moins 8 caractères.');return;}
+    const pwChk=checkPassword(password);
+    if(!pwChk.ok){setMsg(pwChk.message);return;}
     if(password!==confirm){setMsg('Les deux mots de passe ne correspondent pas.');return;}
     setLoading(true);
     const redirectTo=`${window.location.origin}/join/player?token=${encodeURIComponent(token)}`;
@@ -62,8 +64,8 @@ export default function PlayerJoinPage(){
     <p style={s.sub}>Active ton accès personnel pour renseigner ton Hooper quotidien, ton RPE après séance et déclarer une douleur si nécessaire.</p>
     {invite&&<div style={s.identity}><small>COMPTE AUTORISÉ</small><strong>{invite.email}</strong></div>}
     {invite&&!invite.used&&<form onSubmit={activate} style={s.form}>
-      <label style={s.label}>Créer ton mot de passe<input style={s.input} type='password' value={password} onChange={e=>setPassword(e.target.value)} minLength={8} required/></label>
-      <label style={s.label}>Confirmer le mot de passe<input style={s.input} type='password' value={confirm} onChange={e=>setConfirm(e.target.value)} minLength={8} required/></label>
+      <label style={s.label}>Créer ton mot de passe<input style={s.input} type='password' value={password} onChange={e=>setPassword(e.target.value)} minLength={10} required/></label>
+      <label style={s.label}>Confirmer le mot de passe<input style={s.input} type='password' value={confirm} onChange={e=>setConfirm(e.target.value)} minLength={10} required/></label>
       <button style={s.button} disabled={loading}>{loading?'Activation…':'Activer mon compte'}</button>
     </form>}
     {invite?.used&&<p style={s.notice}>Cette invitation a déjà été utilisée. Connecte-toi depuis l’application avec ton e-mail.</p>}

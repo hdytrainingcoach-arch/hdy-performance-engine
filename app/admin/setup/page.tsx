@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { checkPassword } from '@/lib/password';
 
 const PRIMARY_ADMIN_EMAIL = 'hdy.training.coach@gmail.com';
 
@@ -17,8 +18,9 @@ export default function AdminSetupPage() {
     e.preventDefault();
     setError('');
     setMessage('');
-    if (password.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères.');
+    const pwChk = checkPassword(password);
+    if (!pwChk.ok) {
+      setError(pwChk.message);
       return;
     }
     if (password !== confirm) {
@@ -58,10 +60,10 @@ export default function AdminSetupPage() {
             <input value={email} readOnly style={{padding:14,border:'1px solid #d1d5db',borderRadius:10,background:'#f9fafb'}} />
           </label>
           <label style={{display:'grid',gap:7,fontWeight:700}}>Choisir un mot de passe
-            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} minLength={8} required style={{padding:14,border:'1px solid #d1d5db',borderRadius:10}} />
+            <input type="password" value={password} onChange={e=>setPassword(e.target.value)} minLength={10} required style={{padding:14,border:'1px solid #d1d5db',borderRadius:10}} />
           </label>
           <label style={{display:'grid',gap:7,fontWeight:700}}>Confirmer le mot de passe
-            <input type="password" value={confirm} onChange={e=>setConfirm(e.target.value)} minLength={8} required style={{padding:14,border:'1px solid #d1d5db',borderRadius:10}} />
+            <input type="password" value={confirm} onChange={e=>setConfirm(e.target.value)} minLength={10} required style={{padding:14,border:'1px solid #d1d5db',borderRadius:10}} />
           </label>
           {error && <p style={{color:'#b91c1c',background:'#fee2e2',padding:12,borderRadius:10}}>{error}</p>}
           {message && <p style={{color:'#166534',background:'#dcfce7',padding:12,borderRadius:10}}>{message}</p>}

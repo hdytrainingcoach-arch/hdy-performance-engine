@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { checkPassword } from '@/lib/password';
 
 type Invite={invite_id:string;organization_id:string;organization_name:string;team_id:string|null;team_name:string|null;email:string;full_name:string|null;role:string;expires_at:string;used:boolean};
 
@@ -39,7 +40,8 @@ export default function StaffJoinPage(){
   async function activate(e:React.FormEvent){
     e.preventDefault(); setMsg('');
     if(!invite)return;
-    if(password.length<8){setMsg('Le mot de passe doit contenir au moins 8 caractères.');return;}
+    const pwChk=checkPassword(password);
+    if(!pwChk.ok){setMsg(pwChk.message);return;}
     if(password!==confirm){setMsg('Les deux mots de passe ne correspondent pas.');return;}
     setLoading(true);
     const redirectTo=`${window.location.origin}/join/staff?token=${encodeURIComponent(token)}`;
@@ -64,8 +66,8 @@ export default function StaffJoinPage(){
     <p style={s.sub}>Activez votre accès professionnel à HDY Performance Engine pour le suivi des joueurs et du travail de performance.</p>
     {invite&&<div style={s.identity}><small>ACCÈS AUTORISÉ</small><strong>{invite.email}</strong><span>{ROLE_LABEL[invite.role]||invite.role}{invite.team_name?` · ${invite.team_name}`:' · Toutes équipes'}</span></div>}
     {invite&&!invite.used&&<form onSubmit={activate} style={s.form}>
-      <label style={s.label}>Créer votre mot de passe<input style={s.input} type='password' value={password} onChange={e=>setPassword(e.target.value)} minLength={8} required/></label>
-      <label style={s.label}>Confirmer le mot de passe<input style={s.input} type='password' value={confirm} onChange={e=>setConfirm(e.target.value)} minLength={8} required/></label>
+      <label style={s.label}>Créer votre mot de passe<input style={s.input} type='password' value={password} onChange={e=>setPassword(e.target.value)} minLength={10} required/></label>
+      <label style={s.label}>Confirmer le mot de passe<input style={s.input} type='password' value={confirm} onChange={e=>setConfirm(e.target.value)} minLength={10} required/></label>
       <button style={s.button} disabled={loading}>{loading?'Activation…':'Activer mon accès staff'}</button>
     </form>}
     {invite?.used&&<p style={s.notice}>Cette invitation a déjà été utilisée. Connectez-vous à HDY Performance Engine avec votre e-mail.</p>}
