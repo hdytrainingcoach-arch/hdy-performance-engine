@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useOrg } from '@/lib/org-context';
 import { notifyInvite } from '@/lib/invite-client';
@@ -20,6 +20,7 @@ type Player = {
   category:string|null;
   email:string|null;
   user_id:string|null;
+  active:boolean;
 };
 
 export default function RosterPage(){
@@ -27,26 +28,63 @@ export default function RosterPage(){
   const teams=teamsFor(org);
   const [ready,setReady]=useState(false);
   const [authorized,setAuthorized]=useState(false);
+  const [isAdmin,setIsAdmin]=useState(false);
   const [players,setPlayers]=useState<Player[]>([]);
   const [search,setSearch]=useState('');
   const [error,setError]=useState('');
+  const [showInactive,setShowInactive]=useState(false);
+  const [manageId,setManageId]=useState('');
+  const [working,setWorking]=useState('');
+  const [actionMsg,setActionMsg]=useState<Record<string,string>>({});
+
+  const loadPlayers=useCallback(async()=>{
+    let q=supabase.from('players')
+      .select('id,display_name,first_name,last_name,birth_year,position,primary_position,status,observation,photo_url,team_id,category,email,user_id,active')
+      .eq('organization_id',org)
+      .order('display_name');
+    if(!showInactive)q=q.eq('active',true);
+    const {data,error:e}=await q;
+    if(e)setError(e.message); else {setError('');setPlayers((data||[]) as Player[]);}
+  },[org,showInactive]);
 
   useEffect(()=>{if(!org)return;(async()=>{
     setReady(false);
     const {data:{session}}=await supabase.auth.getSession();
     if(!session){setReady(true);return;}
     const {data:profile}=await supabase.from('profiles').select('is_super_admin').eq('user_id',session.user.id).maybeSingle();
-    const {data:membership}=await supabase.from('memberships').select('id').eq('user_id',session.user.id).eq('organization_id',org).eq('active',true).limit(1);
-    if(!profile?.is_super_admin && !(membership?.length)){setAuthorized(false);setReady(true);return;}
+    const {data:membership}=await supabase.from('memberships').select('role').eq('user_id',session.user.id).eq('organization_id',org).eq('active',true);
+    const roles=(membership||[]).map((m:{role:string})=>m.role);
+    if(!profile?.is_super_admin && !roles.length){setAuthorized(false);setReady(true);return;}
     setAuthorized(true);
-    const {data,error:e}=await supabase.from('players')
-      .select('id,display_name,first_name,last_name,birth_year,position,primary_position,status,observation,photo_url,team_id,category,email,user_id')
-      .eq('organization_id',org)
-      .eq('active',true)
-      .order('display_name');
-    if(e)setError(e.message); else setPlayers((data||[]) as Player[]);
+    setIsAdmin(!!profile?.is_super_admin || roles.some(r=>r==='organization_admin'||r==='module_admin'));
+    await loadPlayers();
     setReady(true);
-  })()},[org]);
+  })()},[org,loadPlayers]);
+
+  async function changeTeam(p:Player,teamId:string){
+    setWorking(p.id);setActionMsg(m=>({...m,[p.id]:''}));
+    const {error:e}=await supabase.rpc('move_player_team',{p_player_id:p.id,p_new_team_id:teamId||null});
+    setWorking('');
+    if(e){setActionMsg(m=>({...m,[p.id]:e.message}));return}
+    setActionMsg(m=>({...m,[p.id]:'Équipe modifiée ✓'}));
+    await loadPlayers();
+  }
+  async function toggleActive(p:Player){
+    setWorking(p.id);setActionMsg(m=>({...m,[p.id]:''}));
+    const {error:e}=await supabase.rpc('set_player_active',{p_player_id:p.id,p_active:!p.active});
+    setWorking('');
+    if(e){setActionMsg(m=>({...m,[p.id]:e.message}));return}
+    await loadPlayers();
+  }
+  async function removePlayer(p:Player){
+    if(!window.confirm(`Supprimer définitivement ${p.display_name||p.first_name+' '+p.last_name} ? Cette action est irréversible et n'est possible que pour un doublon sans données.`))return;
+    setWorking(p.id);setActionMsg(m=>({...m,[p.id]:''}));
+    const {error:e}=await supabase.rpc('delete_player',{p_player_id:p.id});
+    setWorking('');
+    if(e){setActionMsg(m=>({...m,[p.id]:e.message}));return}
+    setManageId('');
+    await loadPlayers();
+  }
 
   const [invites,setInvites]=useState<Record<string,string>>({});
   const [invitingId,setInvitingId]=useState('');
@@ -79,8 +117,9 @@ export default function RosterPage(){
 
   return <main style={S.main}>
     <header style={S.header}>
-      <div><span style={S.kicker}>{currentEnv?.branding?.label||currentEnv?.name||'EFFECTIF'}</span><h1 style={S.h1}>Effectifs officiels</h1><p style={S.sub}>{players.length} joueurs actifs.</p></div>
-      <div style={{display:'flex',gap:10,alignItems:'center'}}>
+      <div><span style={S.kicker}>{currentEnv?.branding?.label||currentEnv?.name||'EFFECTIF'}</span><h1 style={S.h1}>Effectifs officiels</h1><p style={S.sub}>{players.filter(p=>p.active).length} joueurs actifs{isAdmin?' · gestion des équipes et des doublons':''}.</p></div>
+      <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
+        {isAdmin&&<label style={S.inactiveToggle}><input type='checkbox' checked={showInactive} onChange={e=>setShowInactive(e.target.checked)}/> Afficher les désactivés</label>}
         <select value={org} onChange={e=>setOrg(e.target.value)} style={{...S.input,width:'auto'}}>{environments.map(e=><option key={e.id} value={e.id}>{e.branding?.label||e.name}</option>)}</select>
         <a href='/admin' style={S.back}>← Portail admin</a>
       </div>
@@ -100,10 +139,11 @@ export default function RosterPage(){
           <div style={S.panelHead}><div><small style={S.muted}>GROUPE ACTIF</small><h2 style={{margin:'4px 0'}}>{t.name}</h2></div><strong style={S.count}>{group.length} joueurs</strong></div>
           <div style={S.cards}>{group.map(p=>{
             const injured=p.status==='indisponible';
-            return <article key={p.id} style={S.playerCard}>
+            const open=manageId===p.id;
+            return <article key={p.id} style={{...S.playerCard,...(p.active?null:{opacity:.6})}}>
               <div style={S.avatar}>{p.photo_url?<img src={p.photo_url} alt='' style={S.photo}/>:<span>{(p.display_name||p.first_name||'?').slice(0,1)}</span>}</div>
               <div style={{minWidth:0,flex:1}}>
-                <div style={S.nameRow}><h3 style={S.name}>{p.display_name||`${p.first_name} ${p.last_name}`}</h3><span style={{...S.status,background:injured?'#3A1416':'#13331F',color:injured?'#FF8A8F':'#8EF0B0'}}>{injured?'Indisponible':'Disponible'}</span></div>
+                <div style={S.nameRow}><h3 style={S.name}>{p.display_name||`${p.first_name} ${p.last_name}`}</h3>{!p.active?<span style={{...S.status,background:'#2B2B31',color:'#A1A1AA'}}>Désactivé</span>:<span style={{...S.status,background:injured?'#3A1416':'#13331F',color:injured?'#FF8A8F':'#8EF0B0'}}>{injured?'Indisponible':'Disponible'}</span>}</div>
                 <div style={S.meta}>{p.birth_year||'—'} · {p.primary_position||p.position||'Poste à compléter'}</div>
                 {p.observation&&<p style={{...S.note,color:injured?'#FFB5B8':'#A1A1AA'}}>{p.observation}</p>}
                 {p.user_id
@@ -112,6 +152,23 @@ export default function RosterPage(){
                     ? <div style={S.inviteBox}><code style={S.inviteCode}>{invites[p.id]}</code><button style={S.ghostSm} onClick={()=>copyInvite(p.id)}>Copier</button></div>
                     : <button style={S.inviteBtn} disabled={invitingId===p.id} onClick={()=>sendInvite(p)}>{invitingId===p.id?'Création…':'Envoyer une invitation'}</button>}
                 {inviteMsg[p.id]&&<small style={S.inviteMsg}>{inviteMsg[p.id]}</small>}
+                {isAdmin&&<>
+                  <button style={S.manageToggle} onClick={()=>{setManageId(open?'':p.id);setActionMsg(m=>({...m,[p.id]:''}))}}>{open?'Fermer':'Gérer'}</button>
+                  {open&&<div style={S.managePanel}>
+                    <label style={S.manageLabel}>Équipe
+                      <select value={p.team_id||''} disabled={working===p.id} onChange={e=>changeTeam(p,e.target.value)} style={S.manageSelect}>
+                        <option value=''>Sans équipe</option>
+                        {teams.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}
+                      </select>
+                    </label>
+                    <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                      <button style={S.ghostSm} disabled={working===p.id} onClick={()=>toggleActive(p)}>{p.active?'Désactiver':'Réactiver'}</button>
+                      <button style={{...S.ghostSm,borderColor:'#5A2327',color:'#FF8A8F'}} disabled={working===p.id} onClick={()=>removePlayer(p)}>Supprimer (doublon)</button>
+                    </div>
+                    <small style={S.manageHint}>« Désactiver » conserve tout l’historique. « Supprimer » n’est possible que sans aucune donnée de suivi.</small>
+                  </div>}
+                  {actionMsg[p.id]&&<small style={S.inviteMsg}>{actionMsg[p.id]}</small>}
+                </>}
               </div>
             </article>
           })}</div>
@@ -154,5 +211,11 @@ const S:Record<string,React.CSSProperties>={
   inviteBox:{marginTop:7,display:'flex',gap:6,alignItems:'center',minWidth:0},
   inviteCode:{fontSize:10,color:'#A1A1AA',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1},
   ghostSm:{height:28,border:'1px solid #3F3F46',borderRadius:7,background:'#1A1A1D',color:'#fff',fontWeight:800,fontSize:11,padding:'0 8px',flex:'0 0 auto'},
-  inviteMsg:{display:'block',marginTop:4,color:'#A1A1AA',fontSize:11}
+  inviteMsg:{display:'block',marginTop:4,color:'#A1A1AA',fontSize:11},
+  inactiveToggle:{display:'flex',gap:6,alignItems:'center',fontSize:12,color:'#A1A1AA',border:'1px solid #2B2B31',borderRadius:10,padding:'0 10px',height:44},
+  manageToggle:{marginTop:7,marginLeft:8,height:32,border:'1px solid #3F3F46',borderRadius:8,background:'#111113',color:'#D4D4D8',fontWeight:800,fontSize:12,padding:'0 10px',cursor:'pointer'},
+  managePanel:{marginTop:8,padding:10,border:'1px solid #2B2B31',borderRadius:10,background:'#0F0F11',display:'grid',gap:8},
+  manageLabel:{display:'grid',gap:4,fontSize:11,fontWeight:800,color:'#A1A1AA'},
+  manageSelect:{height:34,background:'#1B1B1F',color:'#fff',border:'1px solid #34343A',borderRadius:8,padding:'0 8px'},
+  manageHint:{fontSize:10,color:'#71717A',lineHeight:1.4}
 };
