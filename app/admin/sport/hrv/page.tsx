@@ -2,11 +2,15 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useOrg } from '@/lib/org-context';
 
 type Row=Record<string,any>;
-const ELITE='5454ad8f-8f2b-4812-9923-ab7d0b1f8748';
+// environnement de suivi individuel (type elite_performance)
 
 export default function HrvPage(){
+ const {environments,loading:orgLoading}=useOrg();
+ const eliteEnv=environments.find(e=>e.type==='elite_performance')||null;
+ const ELITE_ID=eliteEnv?.id||'';
  const [ready,setReady]=useState(false),[allowed,setAllowed]=useState(false),[msg,setMsg]=useState('');
  const [players,setPlayers]=useState<Row[]>([]),[playerId,setPlayerId]=useState('');
  const [headers,setHeaders]=useState<string[]>([]),[rows,setRows]=useState<Row[]>([]),[delimiter,setDelimiter]=useState(',');
@@ -15,24 +19,24 @@ export default function HrvPage(){
  const [hrv,setHrv]=useState<Row[]>([]),[hooper,setHooper]=useState<Row[]>([]),[rpe,setRpe]=useState<Row[]>([]);
  const selected=players.find(p=>p.id===playerId);
 
- useEffect(()=>{(async()=>{
+ useEffect(()=>{if(orgLoading)return;(async()=>{
   const {data:{session}}=await supabase.auth.getSession();
-  if(!session){setReady(true);return}
+  if(!session||!ELITE_ID){setReady(true);return}
   const [{data:profile},{data:membership},{data:p}]=await Promise.all([
    supabase.from('profiles').select('is_super_admin').eq('user_id',session.user.id).maybeSingle(),
-   supabase.from('memberships').select('id').eq('user_id',session.user.id).eq('organization_id',ELITE).eq('active',true).limit(1).maybeSingle(),
-   supabase.from('players').select('id,display_name,first_name,last_name,external_id').eq('organization_id',ELITE).eq('active',true).order('last_name')
+   supabase.from('memberships').select('id').eq('user_id',session.user.id).eq('organization_id',ELITE_ID).eq('active',true).limit(1).maybeSingle(),
+   supabase.from('players').select('id,display_name,first_name,last_name,external_id').eq('organization_id',ELITE_ID).eq('active',true).order('last_name')
   ]);
   if(profile?.is_super_admin||membership){setAllowed(true);setPlayers(p||[]);if(p?.[0])setPlayerId(p[0].id)}
   setReady(true);
- })()},[]);
+ })()},[orgLoading,ELITE_ID]);
 
  useEffect(()=>{if(playerId)loadDaily()},[playerId]);
  async function loadDaily(){
   const [h,q,r]=await Promise.all([
-   supabase.from('hrv_records').select('*').eq('organization_id',ELITE).eq('player_id',playerId).order('measurement_date',{ascending:false}).limit(180),
-   supabase.from('questionnaire_responses').select('answers,submitted_at').eq('organization_id',ELITE).eq('player_id',playerId).order('submitted_at',{ascending:false}).limit(250),
-   supabase.from('session_rpe').select('rpe,actual_duration_min,load_ua,submitted_at').eq('organization_id',ELITE).eq('player_id',playerId).order('submitted_at',{ascending:false}).limit(250)
+   supabase.from('hrv_records').select('*').eq('organization_id',ELITE_ID).eq('player_id',playerId).order('measurement_date',{ascending:false}).limit(180),
+   supabase.from('questionnaire_responses').select('answers,submitted_at').eq('organization_id',ELITE_ID).eq('player_id',playerId).order('submitted_at',{ascending:false}).limit(250),
+   supabase.from('session_rpe').select('rpe,actual_duration_min,load_ua,submitted_at').eq('organization_id',ELITE_ID).eq('player_id',playerId).order('submitted_at',{ascending:false}).limit(250)
   ]);
   setHrv(h.data||[]);setHooper(q.data||[]);setRpe(r.data||[]);
  }
@@ -45,7 +49,7 @@ export default function HrvPage(){
   rows.forEach((r,i)=>{
    const date=toDate(r[map.date]);const rmssd=num(r[map.rmssd]),ln=num(r[map.lnrmssd]),sdnn=num(r[map.sdnn]),rhrv=num(r[map.rhr]),ready=num(r[map.readiness]);
    if(!date||[rmssd,ln,sdnn,rhrv,ready].every(v=>v===null))return;
-   payload.push({organization_id:ELITE,player_id:playerId,measurement_date:date,measured_at:null,source:source||'csv',source_record_id:map.sourceid?String(r[map.sourceid]||i):String(i),rmssd_ms:rmssd,ln_rmssd:ln,sdnn_ms:sdnn,resting_hr_bpm:rhrv,readiness_score:ready,raw_payload:r,import_batch_id:batch});
+   payload.push({organization_id:ELITE_ID,player_id:playerId,measurement_date:date,measured_at:null,source:source||'csv',source_record_id:map.sourceid?String(r[map.sourceid]||i):String(i),rmssd_ms:rmssd,ln_rmssd:ln,sdnn_ms:sdnn,resting_hr_bpm:rhrv,readiness_score:ready,raw_payload:r,import_batch_id:batch});
   });
   if(!payload.length){setMsg('Aucune ligne HRV valide détectée.');return}
   const {error}=await supabase.from('hrv_records').upsert(payload,{onConflict:'organization_id,player_id,measurement_date,source,source_record_id',ignoreDuplicates:true});
@@ -56,8 +60,8 @@ export default function HrvPage(){
  const corrH=pearson(daily.map(x=>[x.rmssd,x.hooperTotal]).filter(pairValid));
  const corrR=pearson(daily.map(x=>[x.rmssd,x.srpe]).filter(pairValid));
  if(!ready)return <main style={S.center}>Chargement…</main>;
- if(!allowed)return <main style={S.center}>Accès HDY ELITE requis.</main>;
- return <main style={S.main}><header style={S.header}><div><span style={S.kicker}>HDY ELITE · MONITORING</span><h1 style={S.h1}>HRV · Hooper · RPE</h1><p style={S.sub}>Import CSV HRV et lecture journalière croisée. Corrélations descriptives uniquement, sans conclusion causale ni diagnostic.</p></div><a href='/admin/sport' style={S.back}>← Sport & Performance</a></header>
+ if(!allowed)return <main style={S.center}>{eliteEnv?'Accès requis pour cet environnement.':'Aucun environnement de suivi individuel (HRV) configuré.'}</main>;
+ return <main style={S.main}><header style={S.header}><div><span style={S.kicker}>{(eliteEnv?.branding?.label||'HDY ELITE')} · MONITORING</span><h1 style={S.h1}>HRV · Hooper · RPE</h1><p style={S.sub}>Import CSV HRV et lecture journalière croisée. Corrélations descriptives uniquement, sans conclusion causale ni diagnostic.</p></div><a href='/admin/sport' style={S.back}>← Sport & Performance</a></header>
  <section style={S.grid}><article style={S.card}><h2>1. Athlète & CSV</h2><label>Athlète<select value={playerId} onChange={e=>setPlayerId(e.target.value)} style={S.input}>{players.map(p=><option key={p.id} value={p.id}>{p.display_name||`${p.first_name} ${p.last_name}`}</option>)}</select></label><label>Source<input value={source} onChange={e=>setSource(e.target.value)} placeholder='Whoop, Polar, Garmin…' style={S.input}/></label><label>Fichier CSV<input type='file' accept='.csv,text/csv' onChange={e=>fileChanged(e.target.files?.[0])} style={S.file}/></label>{rows.length>0&&<><small>{rows.length} lignes · séparateur détecté « {delimiter} »</small><div style={S.mapGrid}>{[['date','Date *'],['rmssd','RMSSD ms'],['lnrmssd','LnRMSSD'],['sdnn','SDNN ms'],['rhr','FC repos'],['readiness','Readiness'],['sourceid','ID source']].map(([k,l])=><label key={k}>{l}<select value={map[k]||''} onChange={e=>setMap({...map,[k]:e.target.value})} style={S.input}><option value=''>—</option>{headers.map(h=><option key={h}>{h}</option>)}</select></label>)}</div><button onClick={importRows} style={S.primary}>Importer HRV</button></>}{msg&&<p style={S.notice}>{msg}</p>}</article>
  <article style={S.card}><h2>2. Lecture croisée</h2><div style={S.corr}><div><small>RMSSD ↔ HOOPER</small><strong>{fmtCorr(corrH)}</strong></div><div><small>RMSSD ↔ sRPE</small><strong>{fmtCorr(corrR)}</strong></div></div><p style={S.muted}>Le sens et la force d’une corrélation ne prouvent pas une cause. L’interprétation reste individualisée et longitudinale.</p></article></section>
  <section style={S.card}><div style={S.tableWrap}><table style={S.table}><thead><tr>{['Date','RMSSD','LnRMSSD','SDNN','FC repos','Hooper /28','RPE moyen','sRPE total','Source'].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{daily.map(x=><tr key={x.date}><td><b>{x.date}</b></td><td>{show(x.rmssd)}</td><td>{show(x.lnrmssd)}</td><td>{show(x.sdnn)}</td><td>{show(x.rhr)}</td><td>{show(x.hooperTotal)}</td><td>{show(x.rpeAvg)}</td><td>{show(x.srpe)}</td><td>{x.source||'—'}</td></tr>)}</tbody></table></div>{!daily.length&&<p style={S.muted}>Aucune donnée pour {selected?.display_name||'cet athlète'}.</p>}</section>

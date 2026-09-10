@@ -3,23 +3,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import RadarChart from '@/components/RadarChart';
+import { useOrg } from '@/lib/org-context';
 
 type Row = Record<string, any>;
-const DIAMBARS = 'd3136b7f-ef28-43e8-af53-30fa6de70c62';
-const ELITE = '5454ad8f-8f2b-4812-9923-ab7d0b1f8748';
-const TEAMS = [
-  { id: 'd9bb5390-94cb-461e-b2cd-a326da2cfa3d', name: 'PRO A' },
-  { id: '44f6976d-f5ef-4dcf-980f-ce3995e99877', name: 'U19 · PRO B' },
-  { id: '28b38b9f-3de0-419d-8275-b331a074b7f4', name: 'U17' },
-  { id: 'e652df98-4653-416c-b794-3763e38a629d', name: 'U15' },
-];
 const COLORS = ['#E31E24', '#3B82F6', '#22C55E', '#F59E0B'];
 
 export default function Comparator() {
+  const { environments, currentEnvId: org, setCurrentEnvId: setOrg, currentTeamId: team, setCurrentTeamId: setTeam, teamsFor, usesTeams } = useOrg();
   const [ready, setReady] = useState(false);
   const [ok, setOk] = useState(false);
-  const [org, setOrg] = useState(DIAMBARS);
-  const [team, setTeam] = useState(TEAMS[2].id);
   const [players, setPlayers] = useState<Row[]>([]);
   const [defs, setDefs] = useState<Row[]>([]);
   const [results, setResults] = useState<Row[]>([]);
@@ -38,7 +30,7 @@ export default function Comparator() {
     })();
   }, []);
 
-  useEffect(() => { if (ok) load(); /* eslint-disable-next-line */ }, [ok, org, team]);
+  useEffect(() => { if (ok && org) load(); /* eslint-disable-next-line */ }, [ok, org, team]);
 
   async function load() {
     let pq = supabase
@@ -46,7 +38,7 @@ export default function Comparator() {
       .select('id,display_name,first_name,last_name,primary_position,position')
       .eq('organization_id', org)
       .eq('active', true);
-    if (org === DIAMBARS) pq = pq.eq('team_id', team);
+    if (usesTeams(org) && team) pq = pq.eq('team_id', team);
     const { data: p } = await pq.order('display_name');
     setPlayers((p ?? []) as Row[]);
     const ids = (p ?? []).map((x) => x.id);
@@ -121,17 +113,19 @@ export default function Comparator() {
 
       <section style={S.filters}>
         <label>
-          Organisation
+          Environnement
           <select value={org} onChange={(e) => setOrg(e.target.value)} style={S.input}>
-            <option value={DIAMBARS}>DIAMBARS FC</option>
-            <option value={ELITE}>HDY ELITE</option>
+            {environments.map((e) => (
+              <option key={e.id} value={e.id}>{e.branding?.label || e.name}</option>
+            ))}
           </select>
         </label>
-        {org === DIAMBARS && (
+        {usesTeams(org) && (
           <label>
             Équipe
             <select value={team} onChange={(e) => setTeam(e.target.value)} style={S.input}>
-              {TEAMS.map((t) => (
+              <option value="">Toutes les équipes</option>
+              {teamsFor(org).map((t) => (
                 <option key={t.id} value={t.id}>{t.name}</option>
               ))}
             </select>
