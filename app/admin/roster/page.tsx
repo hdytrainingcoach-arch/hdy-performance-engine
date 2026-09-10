@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useOrg } from '@/lib/org-context';
+import { notifyInvite } from '@/lib/invite-client';
 
 type Player = {
   id:string;
@@ -54,13 +55,18 @@ export default function RosterPage(){
   async function sendInvite(p:Player){
     setInvitingId(p.id);setInviteMsg(m=>({...m,[p.id]:''}));
     const {data,error:e}=await supabase.rpc('create_player_invite',{p_player_id:p.id,p_email:p.email||null,p_expires_days:14});
-    setInvitingId('');
-    if(e){setInviteMsg(m=>({...m,[p.id]:e.message}));return}
+    if(e){setInvitingId('');setInviteMsg(m=>({...m,[p.id]:e.message}));return}
     const row=Array.isArray(data)?data[0]:data;
-    if(!row?.token){setInviteMsg(m=>({...m,[p.id]:'Invitation créée mais lien indisponible.'}));return}
+    if(!row?.token){setInvitingId('');setInviteMsg(m=>({...m,[p.id]:'Invitation créée mais lien indisponible.'}));return}
     const link=`${window.location.origin}/join/player?token=${encodeURIComponent(row.token)}`;
     setInvites(m=>({...m,[p.id]:link}));
-    setInviteMsg(m=>({...m,[p.id]:'Invitation créée ✓'}));
+    const to=p.email||'';
+    if(!to){setInvitingId('');setInviteMsg(m=>({...m,[p.id]:'Lien créé — aucun e-mail au dossier, à transmettre manuellement.'}));return}
+    const r=await notifyInvite({kind:'player',inviteId:row.invite_id,token:row.token,email:to,name:p.display_name||`${p.first_name} ${p.last_name}`,orgId:org,orgLabel:currentEnv?.branding?.label||currentEnv?.name});
+    setInvitingId('');
+    if(r.status==='sent')setInviteMsg(m=>({...m,[p.id]:`Invitation envoyée à ${to} ✓`}));
+    else if(r.status==='manual')setInviteMsg(m=>({...m,[p.id]:'Lien créé — à transmettre au joueur (e-mail non configuré).'}));
+    else setInviteMsg(m=>({...m,[p.id]:`Lien créé. Envoi e-mail échoué : ${r.message}`}));
   }
   async function copyInvite(id:string){const link=invites[id];if(!link)return;await navigator.clipboard.writeText(link);setInviteMsg(m=>({...m,[id]:'Lien copié ✓'}))}
 
