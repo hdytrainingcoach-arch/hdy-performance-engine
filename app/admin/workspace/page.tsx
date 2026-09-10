@@ -2,18 +2,18 @@
 
 import { useEffect,useMemo,useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useOrg } from '@/lib/org-context';
 
 type Row=Record<string,any>;
-const DIAMBARS='d3136b7f-ef28-43e8-af53-30fa6de70c62';
-const ELITE='5454ad8f-8f2b-4812-9923-ab7d0b1f8748';
-const TEAMS=[{id:'d9bb5390-94cb-461e-b2cd-a326da2cfa3d',name:'PRO A'},{id:'44f6976d-f5ef-4dcf-980f-ce3995e99877',name:'U19 · PRO B'},{id:'28b38b9f-3de0-419d-8275-b331a074b7f4',name:'U17'},{id:'e652df98-4653-416c-b794-3763e38a629d',name:'U15'}];
 
 export default function Workspace(){
- const [ready,setReady]=useState(false),[ok,setOk]=useState(false),[org,setOrg]=useState(DIAMBARS),[team,setTeam]=useState(TEAMS[2].id);
+ const {environments,currentEnvId:org,setCurrentEnvId:setOrg,currentTeamId:team,setCurrentTeamId:setTeam,teamsFor,usesTeams}=useOrg();
+ const [ready,setReady]=useState(false),[ok,setOk]=useState(false);
  const [players,setPlayers]=useState<Row[]>([]),[tests,setTests]=useState<Row[]>([]),[questionnaires,setQuestionnaires]=useState<Row[]>([]),[pain,setPain]=useState<Row[]>([]),[rpe,setRpe]=useState<Row[]>([]),[alerts,setAlerts]=useState<Row[]>([]);
  useEffect(()=>{(async()=>{const {data:{session}}=await supabase.auth.getSession();if(!session){setReady(true);return}const [{data:p},{data:m}]=await Promise.all([supabase.from('profiles').select('is_super_admin').eq('user_id',session.user.id).maybeSingle(),supabase.from('memberships').select('id').eq('user_id',session.user.id).eq('active',true).limit(1)]);if(p?.is_super_admin||m?.length)setOk(true);setReady(true)})()},[]);
- useEffect(()=>{if(ok)load()},[ok,org,team]);
- async function load(){const q=org===DIAMBARS?supabase.from('players').select('id').eq('organization_id',org).eq('team_id',team).eq('active',true):supabase.from('players').select('id').eq('organization_id',org).eq('active',true);const {data:p}=await q;const list=(p||[]) as Row[];setPlayers(list);const ids=list.map(x=>x.id);if(!ids.length){setTests([]);setQuestionnaires([]);setPain([]);setRpe([]);setAlerts([]);return}const [t,h,pa,r,al]=await Promise.all([supabase.from('test_results').select('id,player_id,tested_at').in('player_id',ids).limit(1000),supabase.from('questionnaire_responses').select('id,player_id,submitted_at').eq('organization_id',org).in('player_id',ids).limit(1000),supabase.from('pain_declarations').select('id,player_id,declared_at,intensity').eq('organization_id',org).in('player_id',ids).limit(1000),supabase.from('session_rpe').select('id,player_id,load_ua,submitted_at').eq('organization_id',org).in('player_id',ids).limit(1000),supabase.from('alerts').select('id,player_id,status').eq('organization_id',org).in('player_id',ids).neq('status','closed').limit(1000)]);setTests((t.data||[]) as Row[]);setQuestionnaires((h.data||[]) as Row[]);setPain((pa.data||[]) as Row[]);setRpe((r.data||[]) as Row[]);setAlerts((al.data||[]) as Row[])}
+ const scopeTeam=usesTeams(org)&&team?team:'';
+ useEffect(()=>{if(ok&&org)load()},[ok,org,scopeTeam]);
+ async function load(){let pq=supabase.from('players').select('id').eq('organization_id',org).eq('active',true);if(scopeTeam)pq=pq.eq('team_id',scopeTeam);const {data:p}=await pq;const list=(p||[]) as Row[];setPlayers(list);const ids=list.map(x=>x.id);if(!ids.length){setTests([]);setQuestionnaires([]);setPain([]);setRpe([]);setAlerts([]);return}const [t,h,pa,r,al]=await Promise.all([supabase.from('test_results').select('id,player_id,tested_at').in('player_id',ids).limit(1000),supabase.from('questionnaire_responses').select('id,player_id,submitted_at').eq('organization_id',org).in('player_id',ids).limit(1000),supabase.from('pain_declarations').select('id,player_id,declared_at,intensity').eq('organization_id',org).in('player_id',ids).limit(1000),supabase.from('session_rpe').select('id,player_id,load_ua,submitted_at').eq('organization_id',org).in('player_id',ids).limit(1000),supabase.from('alerts').select('id,player_id,status').eq('organization_id',org).in('player_id',ids).neq('status','closed').limit(1000)]);setTests((t.data||[]) as Row[]);setQuestionnaires((h.data||[]) as Row[]);setPain((pa.data||[]) as Row[]);setRpe((r.data||[]) as Row[]);setAlerts((al.data||[]) as Row[])}
  const today=new Date().toISOString().slice(0,10);
  const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
  const missingHooper=useMemo(()=>players.filter(p=>!questionnaires.some(q=>q.player_id===p.id&&String(q.submitted_at||'').slice(0,10)===today)).length,[players,questionnaires,today]);
@@ -27,7 +27,7 @@ export default function Workspace(){
   {href:'/admin/sport/comparator',title:'Comparateur',desc:'Comparer jusqu’à 4 profils sur des protocoles cohérents.',tag:'ANALYSE'},
  ];
  return <main style={S.main}><header style={S.header}><div><span style={S.kicker}>HDY PERFORMANCE ENGINE</span><h1 style={S.h1}>Dashboard de pilotage</h1><p style={S.sub}>Vue synthétique. Les opérations détaillées sont maintenant séparées dans leurs espaces dédiés.</p></div><a href='/admin' style={S.back}>← Portail</a></header>
- <section style={S.filters}><label>Organisation<select value={org} onChange={e=>setOrg(e.target.value)} style={S.input}><option value={DIAMBARS}>DIAMBARS FC</option><option value={ELITE}>HDY ELITE</option></select></label>{org===DIAMBARS&&<label>Équipe<select value={team} onChange={e=>setTeam(e.target.value)} style={S.input}>{TEAMS.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></label>}</section>
+ <section style={S.filters}><label>Environnement<select value={org} onChange={e=>setOrg(e.target.value)} style={S.input}>{environments.map(e=><option key={e.id} value={e.id}>{e.branding?.label||e.name}</option>)}</select></label>{usesTeams(org)&&<label>Équipe<select value={team} onChange={e=>setTeam(e.target.value)} style={S.input}><option value=''>Toutes les équipes</option>{teamsFor(org).map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></label>}</section>
  <section style={S.metrics}><Metric label='ATHLÈTES ACTIFS' value={players.length}/><Metric label='HOOPER MANQUANTS (AUJ.)' value={missingHooper}/><Metric label='DOULEURS 7 JOURS' value={painWeek}/><Metric label='ALERTES OUVERTES' value={alerts.length}/><Metric label='sRPE J-1 (TOTAL UA)' value={srpeYesterday}/><Metric label='TESTS ENREGISTRÉS' value={tests.length}/></section>
  <section style={S.grid}>{cards.map(c=><a key={c.href} href={c.href} style={S.card}><span style={S.tag}>{c.tag}</span><h2>{c.title}</h2><p>{c.desc}</p><b>Ouvrir →</b></a>)}</section>
  </main>

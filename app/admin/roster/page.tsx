@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useOrg } from '@/lib/org-context';
 
 type Player = {
   id:string;
@@ -20,36 +21,31 @@ type Player = {
   user_id:string|null;
 };
 
-const DIAMBARS='d3136b7f-ef28-43e8-af53-30fa6de70c62';
-const TEAMS=[
-  {id:'d9bb5390-94cb-461e-b2cd-a326da2cfa3d',name:'PRO A'},
-  {id:'44f6976d-f5ef-4dcf-980f-ce3995e99877',name:'U19 · PRO B'},
-  {id:'28b38b9f-3de0-419d-8275-b331a074b7f4',name:'U17'},
-  {id:'e652df98-4653-416c-b794-3763e38a629d',name:'U15'},
-] as const;
-
 export default function RosterPage(){
+  const {environments,currentEnvId:org,setCurrentEnvId:setOrg,currentEnv,teamsFor}=useOrg();
+  const teams=teamsFor(org);
   const [ready,setReady]=useState(false);
   const [authorized,setAuthorized]=useState(false);
   const [players,setPlayers]=useState<Player[]>([]);
   const [search,setSearch]=useState('');
   const [error,setError]=useState('');
 
-  useEffect(()=>{(async()=>{
+  useEffect(()=>{if(!org)return;(async()=>{
+    setReady(false);
     const {data:{session}}=await supabase.auth.getSession();
     if(!session){setReady(true);return;}
     const {data:profile}=await supabase.from('profiles').select('is_super_admin').eq('user_id',session.user.id).maybeSingle();
-    const {data:membership}=await supabase.from('memberships').select('id').eq('user_id',session.user.id).eq('organization_id',DIAMBARS).eq('active',true).limit(1);
-    if(!profile?.is_super_admin && !(membership?.length)){setReady(true);return;}
+    const {data:membership}=await supabase.from('memberships').select('id').eq('user_id',session.user.id).eq('organization_id',org).eq('active',true).limit(1);
+    if(!profile?.is_super_admin && !(membership?.length)){setAuthorized(false);setReady(true);return;}
     setAuthorized(true);
     const {data,error:e}=await supabase.from('players')
       .select('id,display_name,first_name,last_name,birth_year,position,primary_position,status,observation,photo_url,team_id,category,email,user_id')
-      .eq('organization_id',DIAMBARS)
+      .eq('organization_id',org)
       .eq('active',true)
       .order('display_name');
     if(e)setError(e.message); else setPlayers((data||[]) as Player[]);
     setReady(true);
-  })()},[]);
+  })()},[org]);
 
   const [invites,setInvites]=useState<Record<string,string>>({});
   const [invitingId,setInvitingId]=useState('');
@@ -71,24 +67,29 @@ export default function RosterPage(){
   const filtered=useMemo(()=>players.filter(p=>`${p.display_name||''} ${p.first_name} ${p.last_name} ${p.position||''} ${p.primary_position||''} ${p.observation||''}`.toLowerCase().includes(search.toLowerCase())),[players,search]);
 
   if(!ready)return <main style={S.center}>Chargement…</main>;
-  if(!authorized)return <main style={S.center}>Accès staff Diambars requis.</main>;
+  if(!authorized)return <main style={S.center}>Accès staff requis pour cet environnement.</main>;
+
+  const groups=teams.length?teams:[{id:'__none__',name:'Sans équipe'}];
 
   return <main style={S.main}>
     <header style={S.header}>
-      <div><span style={S.kicker}>DIAMBARS FC · 2026-2027</span><h1 style={S.h1}>Effectifs officiels</h1><p style={S.sub}>{players.length} joueurs actifs intégrés dans HDY Performance Engine.</p></div>
-      <a href='/admin' style={S.back}>← Portail admin</a>
+      <div><span style={S.kicker}>{currentEnv?.branding?.label||currentEnv?.name||'EFFECTIF'}</span><h1 style={S.h1}>Effectifs officiels</h1><p style={S.sub}>{players.length} joueurs actifs.</p></div>
+      <div style={{display:'flex',gap:10,alignItems:'center'}}>
+        <select value={org} onChange={e=>setOrg(e.target.value)} style={{...S.input,width:'auto'}}>{environments.map(e=><option key={e.id} value={e.id}>{e.branding?.label||e.name}</option>)}</select>
+        <a href='/admin' style={S.back}>← Portail admin</a>
+      </div>
     </header>
 
     <section style={S.summary}>
-      <div style={S.teamGrid}>{TEAMS.map(t=>{const n=players.filter(p=>p.team_id===t.id).length;return <div key={t.id} style={S.teamCard}><span>{t.name}</span><strong>{n}</strong><small>joueurs</small></div>})}</div>
+      <div style={S.teamGrid}>{groups.map(t=>{const n=players.filter(p=>t.id==='__none__'?!p.team_id:p.team_id===t.id).length;return <div key={t.id} style={S.teamCard}><span>{t.name}</span><strong>{n}</strong><small>joueurs</small></div>})}</div>
       <input value={search} onChange={e=>setSearch(e.target.value)} placeholder='Rechercher un joueur ou un poste' style={S.input}/>
     </section>
 
     {error&&<div style={S.error}>{error}</div>}
 
     <section style={S.groups}>
-      {TEAMS.map(t=>{
-        const group=filtered.filter(p=>p.team_id===t.id);
+      {groups.map(t=>{
+        const group=filtered.filter(p=>t.id==='__none__'?!p.team_id:p.team_id===t.id);
         return <section key={t.id} style={S.panel}>
           <div style={S.panelHead}><div><small style={S.muted}>GROUPE ACTIF</small><h2 style={{margin:'4px 0'}}>{t.name}</h2></div><strong style={S.count}>{group.length} joueurs</strong></div>
           <div style={S.cards}>{group.map(p=>{
