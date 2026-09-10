@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { enqueue } from '@/lib/offline-queue';
 import { ArrowRight, ChevronLeft } from 'lucide-react';
 
 type Player = { id: string; organization_id: string };
@@ -111,7 +112,9 @@ export default function HooperFlow({
   async function save() {
     setSaving(true);
     setMsg('');
-    const { error } = await supabase.from('questionnaire_responses').insert({
+    // Passe toujours par la file offline : la réponse est enregistrée sur l'appareil
+    // puis synchronisée (immédiatement si le réseau est là), sans jamais de doublon.
+    await enqueue('hooper', {
       organization_id: player.organization_id,
       player_id: player.id,
       template_id: tpl!.id,
@@ -122,14 +125,9 @@ export default function HooperFlow({
         unusual_symptom: unusualSymptom,
         comment: comment || null,
       },
-      source: 'web',
       submitted_at: new Date().toISOString(),
     });
     setSaving(false);
-    if (error) {
-      setMsg(error.message);
-      return;
-    }
     onSaved();
   }
 
