@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useOrg } from '@/lib/org-context';
 import { notifyInvite } from '@/lib/invite-client';
 import { exportCsv, timestampedName } from '@/lib/csv-export';
+import TeamManager from '@/components/TeamManager';
 
 type Player = {
   id:string;
@@ -147,6 +148,8 @@ export default function RosterPage(){
     </section>
 
     {error&&<div style={S.error}>{error}</div>}
+
+    {isAdmin&&currentEnv?.type!=='elite_performance'&&<TeamManager organizationId={org}/>}
 
     <section style={S.groups}>
       {groups.map(t=>{
