@@ -106,17 +106,22 @@ export default function RosterPage(){
   const [invites,setInvites]=useState<Record<string,string>>({});
   const [invitingId,setInvitingId]=useState('');
   const [inviteMsg,setInviteMsg]=useState<Record<string,string>>({});
+  const [emailDraft,setEmailDraft]=useState<Record<string,string>>({});
 
   async function sendInvite(p:Player){
+    const to=(p.email||emailDraft[p.id]||'').trim();
+    if(!to){setInviteMsg(m=>({...m,[p.id]:'Ajoute un e-mail avant d’inviter.'}));return}
     setInvitingId(p.id);setInviteMsg(m=>({...m,[p.id]:''}));
-    const {data,error:e}=await supabase.rpc('create_player_invite',{p_player_id:p.id,p_email:p.email||null,p_expires_days:14});
+    const {data,error:e}=await supabase.rpc('create_player_invite',{p_player_id:p.id,p_email:to,p_expires_days:14});
     if(e){setInvitingId('');setInviteMsg(m=>({...m,[p.id]:e.message}));return}
     const row=Array.isArray(data)?data[0]:data;
     if(!row?.token){setInvitingId('');setInviteMsg(m=>({...m,[p.id]:'Invitation créée mais lien indisponible.'}));return}
     const link=`${window.location.origin}/join/player?token=${encodeURIComponent(row.token)}`;
     setInvites(m=>({...m,[p.id]:link}));
-    const to=p.email||'';
-    if(!to){setInvitingId('');setInviteMsg(m=>({...m,[p.id]:'Lien créé — aucun e-mail au dossier, à transmettre manuellement.'}));return}
+    if(!p.email){
+      // conserve l'e-mail saisi sur le dossier pour la prochaine fois
+      await supabase.from('players').update({email:to}).eq('id',p.id).then(()=>loadPlayers());
+    }
     const r=await notifyInvite({kind:'player',inviteId:row.invite_id,token:row.token,email:to,name:p.display_name||`${p.first_name} ${p.last_name}`,orgId:org,orgLabel:currentEnv?.branding?.label||currentEnv?.name});
     setInvitingId('');
     if(r.status==='sent')setInviteMsg(m=>({...m,[p.id]:`Invitation envoyée à ${to} ✓`}));
@@ -184,7 +189,12 @@ export default function RosterPage(){
                   ? <span style={S.accountOk}>Compte actif</span>
                   : invites[p.id]
                     ? <div style={S.inviteBox}><code style={S.inviteCode}>{invites[p.id]}</code><button style={S.ghostSm} onClick={()=>copyInvite(p.id)}>Copier</button></div>
-                    : <button style={S.inviteBtn} disabled={invitingId===p.id} onClick={()=>sendInvite(p)}>{invitingId===p.id?'Création…':'Envoyer une invitation'}</button>}
+                    : p.email
+                      ? <button style={S.inviteBtn} disabled={invitingId===p.id} onClick={()=>sendInvite(p)}>{invitingId===p.id?'Création…':'Envoyer une invitation'}</button>
+                      : <div style={S.inviteBox}>
+                          <input type='email' placeholder='e-mail du joueur' value={emailDraft[p.id]||''} onChange={e=>setEmailDraft(m=>({...m,[p.id]:e.target.value}))} style={S.emailInput}/>
+                          <button style={S.inviteBtn} disabled={invitingId===p.id||!emailDraft[p.id]?.trim()} onClick={()=>sendInvite(p)}>{invitingId===p.id?'Création…':'Inviter'}</button>
+                        </div>}
                 {inviteMsg[p.id]&&<small style={S.inviteMsg}>{inviteMsg[p.id]}</small>}
                 {isAdmin&&<>
                   <button style={S.manageToggle} onClick={()=>{setManageId(open?'':p.id);setActionMsg(m=>({...m,[p.id]:''}))}}>{open?'Fermer':'Gérer'}</button>
@@ -244,6 +254,7 @@ const S:Record<string,React.CSSProperties>={
   accountOk:{display:'inline-block',marginTop:6,fontSize:10,fontWeight:900,color:'#8EF0B0',background:'#13331F',borderRadius:999,padding:'4px 8px'},
   inviteBtn:{marginTop:7,height:32,border:'1px solid #3F3F46',borderRadius:8,background:'#1A1A1D',color:'#fff',fontWeight:800,fontSize:12,padding:'0 10px',cursor:'pointer'},
   inviteBox:{marginTop:7,display:'flex',gap:6,alignItems:'center',minWidth:0},
+  emailInput:{height:32,minWidth:0,flex:1,background:'#1B1B1F',color:'#fff',border:'1px solid #34343A',borderRadius:8,padding:'0 8px',fontSize:12},
   inviteCode:{fontSize:10,color:'#A1A1AA',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1},
   ghostSm:{height:28,border:'1px solid #3F3F46',borderRadius:7,background:'#1A1A1D',color:'#fff',fontWeight:800,fontSize:11,padding:'0 8px',flex:'0 0 auto'},
   inviteMsg:{display:'block',marginTop:4,color:'#A1A1AA',fontSize:11},
