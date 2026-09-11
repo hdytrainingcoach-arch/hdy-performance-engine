@@ -2,6 +2,9 @@
 // Aucune décision automatique : ces fonctions décrivent, elles ne concluent pas.
 
 export function toNum(v: unknown): number | null {
+  // Donnée manquante affichée, jamais imputée (cahier des charges §6) :
+  // null/undefined/'' ne doivent jamais devenir 0 — Number(null) === 0 sinon.
+  if (v === null || v === undefined || v === '' || typeof v === 'boolean') return null;
   const x = Number(v);
   return Number.isFinite(x) ? x : null;
 }
