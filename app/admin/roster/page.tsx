@@ -87,6 +87,21 @@ export default function RosterPage(){
     setManageId('');
     await loadPlayers();
   }
+  async function anonymizePlayer(p:Player){
+    if(!window.confirm(`Anonymiser ${p.display_name||p.first_name+' '+p.last_name} (RGPD) ? L'identité est effacée définitivement ; l'historique de suivi (déjà pseudonyme) est conservé pour les statistiques d'équipe. Action irréversible.`))return;
+    setWorking(p.id);setActionMsg(m=>({...m,[p.id]:''}));
+    const {data,error:e}=await supabase.rpc('anonymize_player',{p_player_id:p.id});
+    if(e){setWorking('');setActionMsg(m=>({...m,[p.id]:e.message}));return}
+    if(data){
+      const {data:{session}}=await supabase.auth.getSession();
+      if(session){
+        await fetch('/api/gdpr/delete-account',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({organizationId:org,userId:data})}).catch(()=>undefined);
+      }
+    }
+    setWorking('');setManageId('');
+    setActionMsg(m=>({...m,[p.id]:'Joueur anonymisé (RGPD) ✓'}));
+    await loadPlayers();
+  }
 
   const [invites,setInvites]=useState<Record<string,string>>({});
   const [invitingId,setInvitingId]=useState('');
@@ -183,8 +198,9 @@ export default function RosterPage(){
                     <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
                       <button style={S.ghostSm} disabled={working===p.id} onClick={()=>toggleActive(p)}>{p.active?'Désactiver':'Réactiver'}</button>
                       <button style={{...S.ghostSm,borderColor:'#5A2327',color:'#FF8A8F'}} disabled={working===p.id} onClick={()=>removePlayer(p)}>Supprimer (doublon)</button>
+                      <button style={{...S.ghostSm,borderColor:'#3A2C5A',color:'#c9b8ff'}} disabled={working===p.id} onClick={()=>anonymizePlayer(p)}>Anonymiser (RGPD)</button>
                     </div>
-                    <small style={S.manageHint}>« Désactiver » conserve tout l’historique. « Supprimer » n’est possible que sans aucune donnée de suivi.</small>
+                    <small style={S.manageHint}>« Désactiver » conserve tout l’historique. « Supprimer » n’est possible que sans aucune donnée de suivi. « Anonymiser » efface l’identité et supprime le compte, en gardant l’historique de suivi pseudonyme.</small>
                   </div>}
                   {actionMsg[p.id]&&<small style={S.inviteMsg}>{actionMsg[p.id]}</small>}
                 </>}
