@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useOrg } from '@/lib/org-context';
 import { AVAILABILITY_COLOR, AVAILABILITY_LABEL, hasMedicalAccess } from '@/lib/medical';
+import { exportCsv, timestampedName } from '@/lib/csv-export';
 
 type Row = Record<string, any>;
 
@@ -67,6 +68,15 @@ export default function MedicalRoster() {
     return c;
   }, [players, statusBy]);
 
+  function exportMedical(){
+    exportCsv(timestampedName('medical_autorise'),rows,[
+      {key:'name',label:'Joueur',value:p=>p.display_name||`${p.first_name} ${p.last_name}`},
+      {key:'availability',label:'Disponibilité',value:p=>p.st?.availability?AVAILABILITY_LABEL[p.st.availability]:''},
+      {key:'restrictions',label:'Restrictions partagées',value:p=>p.st?.shared_restrictions||''},
+      {key:'open_events',label:'Blessures en cours',value:p=>(p.ev||[]).map((e:Row)=>e.body_zone||'blessure').join(' / ')},
+      {key:'expected_return',label:'Retour prévu',value:p=>p.st?.expected_return||''},
+    ]);
+  }
   if (!ready) return <main style={S.center}>Chargement…</main>;
   if (!allowed) return (
     <main style={S.center}>
@@ -86,6 +96,7 @@ export default function MedicalRoster() {
           <h1 style={S.h1}>Suivi médical</h1>
           <p style={S.sub}>Antécédents, blessures, retour progressif. Le coach ne voit que le statut fonctionnel partagé.</p>
         </div>
+        <button onClick={exportMedical} style={{...S.back,cursor:'pointer'}}>Export CSV médical autorisé</button>
         <a href="/admin" style={S.back}>← Portail</a>
       </header>
 

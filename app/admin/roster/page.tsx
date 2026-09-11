@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useOrg } from '@/lib/org-context';
 import { notifyInvite } from '@/lib/invite-client';
+import { exportCsv, timestampedName } from '@/lib/csv-export';
 
 type Player = {
   id:string;
@@ -110,6 +111,20 @@ export default function RosterPage(){
 
   const filtered=useMemo(()=>players.filter(p=>`${p.display_name||''} ${p.first_name} ${p.last_name} ${p.position||''} ${p.primary_position||''} ${p.observation||''}`.toLowerCase().includes(search.toLowerCase())),[players,search]);
 
+  function exportProfiles(){
+    exportCsv(timestampedName(`profils_${currentEnv?.branding?.label||currentEnv?.name||'effectif'}`),filtered,[
+      {key:'display_name',label:'Nom',value:p=>p.display_name||`${p.first_name} ${p.last_name}`},
+      {key:'birth_year',label:'Année de naissance'},
+      {key:'primary_position',label:'Poste',value:p=>p.primary_position||p.position||''},
+      {key:'category',label:'Catégorie'},
+      {key:'team_id',label:'Équipe',value:p=>teams.find(t=>t.id===p.team_id)?.name||''},
+      {key:'status',label:'Statut'},
+      {key:'active',label:'Actif',value:p=>p.active?'oui':'non'},
+      {key:'email',label:'E-mail'},
+      {key:'user_id',label:'Compte activé',value:p=>p.user_id?'oui':'non'},
+    ]);
+  }
+
   if(!ready)return <main style={S.center}>Chargement…</main>;
   if(!authorized)return <main style={S.center}>Accès staff requis pour cet environnement.</main>;
 
@@ -120,6 +135,7 @@ export default function RosterPage(){
       <div><span style={S.kicker}>{currentEnv?.branding?.label||currentEnv?.name||'EFFECTIF'}</span><h1 style={S.h1}>Effectifs officiels</h1><p style={S.sub}>{players.filter(p=>p.active).length} joueurs actifs{isAdmin?' · gestion des équipes et des doublons':''}.</p></div>
       <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
         {isAdmin&&<label style={S.inactiveToggle}><input type='checkbox' checked={showInactive} onChange={e=>setShowInactive(e.target.checked)}/> Afficher les désactivés</label>}
+        <button onClick={exportProfiles} style={S.exportBtn}>Exporter CSV (profils)</button>
         <select value={org} onChange={e=>setOrg(e.target.value)} style={{...S.input,width:'auto'}}>{environments.map(e=><option key={e.id} value={e.id}>{e.branding?.label||e.name}</option>)}</select>
         <a href='/admin' style={S.back}>← Portail admin</a>
       </div>
@@ -217,5 +233,6 @@ const S:Record<string,React.CSSProperties>={
   managePanel:{marginTop:8,padding:10,border:'1px solid #2B2B31',borderRadius:10,background:'#0F0F11',display:'grid',gap:8},
   manageLabel:{display:'grid',gap:4,fontSize:11,fontWeight:800,color:'#A1A1AA'},
   manageSelect:{height:34,background:'#1B1B1F',color:'#fff',border:'1px solid #34343A',borderRadius:8,padding:'0 8px'},
-  manageHint:{fontSize:10,color:'#71717A',lineHeight:1.4}
+  manageHint:{fontSize:10,color:'#71717A',lineHeight:1.4},
+  exportBtn:{height:44,border:'1px solid #3F3F46',borderRadius:10,background:'#1A1A1D',color:'#fff',fontWeight:800,fontSize:12,padding:'0 12px',cursor:'pointer'}
 };
