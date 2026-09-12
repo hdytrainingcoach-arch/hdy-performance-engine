@@ -108,7 +108,8 @@ describe('file offline — Hooper / RPE / douleur', () => {
   it('une erreur réseau passe la saisie en erreur, retryErrors la renvoie', async () => {
     state.failNext = 1;
     // enqueue tente une synchro immédiate → échoue → saisie en erreur
-    await enqueue('rpe', { organization_id: 'o1', session_id: 's1', player_id: 'p1', rpe: 6, actual_duration_min: 70, load_ua: 420 });
+    // load_ua est une colonne générée (duration * rpe) : ne jamais l'insérer explicitement.
+    await enqueue('rpe', { organization_id: 'o1', session_id: 's1', player_id: 'p1', rpe: 6, actual_duration_min: 70 });
     let c = await queueCounts();
     expect(c.error).toBe(1);
     expect(state.inserted).toHaveLength(0);
