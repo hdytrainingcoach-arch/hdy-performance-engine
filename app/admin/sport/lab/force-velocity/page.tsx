@@ -19,6 +19,19 @@ type View='pro'|'player';
 
 const DEFICIT_LABEL:Record<string,string>={force:'FORCE DEFICIT',balanced:'BALANCED',velocity:'VELOCITY DEFICIT',unavailable:'—'};
 const DEFICIT_COLOR:Record<string,string>={force:'#E31E24',balanced:'#22C55E',velocity:'#F59E0B',unavailable:'#71717A'};
+const PLAYER_MESSAGE:Record<string,string>={
+ force:'Ton profil présente actuellement un déficit relatif de force. Le travail doit progressivement augmenter ta capacité à produire de la force à vitesse élevée.',
+ balanced:'Ton profil force-vitesse est actuellement bien équilibré par rapport à ton optimum individuel. Le travail peut couvrir l’ensemble du spectre (force, force-vitesse, vitesse).',
+ velocity:'Ton profil présente actuellement un déficit relatif de vitesse. Le travail doit progressivement augmenter ta capacité à produire de la vitesse à charge légère.',
+};
+// v0_opt / f0_opt ne sont pas stockés en base (seul sfv_optimal l'est) — ils
+// se retrouvent simplement à partir de Pmax = F0·V0/4 et Sfv = -F0/V0.
+function optimalPoint(sfvOpt:number|null,pmaxRelative:number|null){
+ if(sfvOpt==null||pmaxRelative==null||sfvOpt>=0)return null;
+ const v0Opt=Math.sqrt((-4*pmaxRelative)/sfvOpt);
+ const f0OptRel=-sfvOpt*v0Opt;
+ return {v0Opt,f0OptRel};
+}
 
 export default function ForceVelocityLabPage(){
  const {environments,currentEnvId:org,setCurrentEnvId:setOrg,currentTeamId:team,setCurrentTeamId:setTeam,teamsFor,usesTeams}=useOrg();
@@ -88,12 +101,13 @@ export default function ForceVelocityLabPage(){
  if(!ready)return <main style={S.center}>Chargement…</main>;
  if(!ok)return <main style={S.center}>Accès staff requis.</main>;
 
- const maxV=result?.v0?result.v0*1.15:1, maxF=result?.f0?(result.f0/(player?.weight_kg||1))*1.15:1;
- const chartPoints=trials.length?trials:[];
+ const opt=result?optimalPoint(result.sfv_optimal,result.pmax_relative):null;
+ const maxV=Math.max(result?.v0||0,opt?.v0Opt||0)*1.15||1;
+ const maxF=Math.max(result?.f0!=null&&player?.weight_kg?result.f0/player.weight_kg:0,opt?.f0OptRel||0)*1.15||1;
 
  return <main style={S.main}>
   <header style={S.header}>
-   <div><span style={S.kicker}>HDY LAB</span><h1>Profil Force-Vitesse</h1><p>Sauts chargés mesurés au temps de vol. F0, V0, Pmax et qualité du profil (R²) calculés par le moteur lib/performance/fv (méthode Samozino/Morin, formules documentées dans le code).</p></div>
+   <div><span style={S.kicker}>HDY LAB</span><h1>Profil Force-Vitesse</h1><p>Sauts chargés mesurés au temps de vol. F0, V0, Pmax, profil optimal et FV imbalance calculés par le moteur lib/performance/fv (Samozino et al. 2012, formules et référence documentées dans le code — push-off vertical).</p></div>
    <div style={{display:'flex',gap:8,alignItems:'flex-start'}}>
     <button onClick={()=>setView(v=>v==='pro'?'player':'pro')} style={S.viewToggle}>{view==='pro'?'Vue préparateur':'Vue joueur'}</button>
     <a href='/admin/sport/lab' style={S.back}>← HDY LAB</a>
@@ -144,22 +158,31 @@ export default function ForceVelocityLabPage(){
      <svg viewBox='0 0 300 240' style={S.chart}>
       <line x1={20} y1={220} x2={280} y2={220} stroke='#2B2B31'/>
       <line x1={20} y1={20} x2={20} y2={220} stroke='#2B2B31'/>
-      {result.f0!=null&&result.v0!=null&&<line x1={20} y1={220-((result.f0/(player!.weight_kg))/maxF)*200} x2={20+(result.v0/maxV)*260} y2={220} stroke='#E31E24' strokeWidth={2}/>}
+      {opt&&<line x1={20} y1={220-(opt.f0OptRel/maxF)*200} x2={20+(opt.v0Opt/maxV)*260} y2={220} stroke='#71717A' strokeDasharray='4 3' strokeWidth={2}/>}
+      {result.f0!=null&&result.v0!=null&&player?.weight_kg&&<line x1={20} y1={220-((result.f0/player.weight_kg)/maxF)*200} x2={20+(result.v0/maxV)*260} y2={220} stroke='#E31E24' strokeWidth={2}/>}
+      <g transform='translate(24,30)' fontSize='9' fill='#D4D4D8'><rect width='8' height='8' fill='#E31E24'/><text x='12' y='8'>REAL PROFILE</text></g>
+      {opt&&<g transform='translate(24,44)' fontSize='9' fill='#D4D4D8'><rect width='8' height='8' fill='#71717A'/><text x='12' y='8'>OPTIMAL PROFILE</text></g>}
      </svg>
      <div style={S.statsGrid}>
       <div><b>{result.pmax_relative?.toFixed(1)}</b><small>Pmax (W/kg)</small></div>
-      <div><b>{result.f0!=null?(result.f0/player!.weight_kg).toFixed(1):'—'}</b><small>F0 (N/kg)</small></div>
+      <div><b>{result.f0!=null&&player?.weight_kg?(result.f0/player.weight_kg).toFixed(1):'—'}</b><small>F0 (N/kg)</small></div>
       <div><b>{result.v0?.toFixed(2)}</b><small>V0 (m/s)</small></div>
      </div>
      <div style={S.statsGrid}>
-      <div><b>{result.sfv?.toFixed(0)}</b><small>Sfv (N·s/kg·m)</small></div>
+      <div><b>{result.sfv?.toFixed(0)}</b><small>Sfv (N·s/m)</small></div>
       <div><b>{result.r_squared?.toFixed(3)}</b><small>R²</small></div>
       <div><b style={{color:result.quality==='HIGH'?'#22C55E':result.quality==='MEDIUM'?'#F59E0B':'#E31E24'}}>{result.quality}</b><small>Qualité du profil</small></div>
      </div>
-     <div style={S.notice}>
-      <b>Profil optimal / FV imbalance : indisponible.</b><br/>
-      La formule Sfv_opt (Samozino et al. 2012) n’a pas pu être vérifiée sur la publication originale dans cet environnement (accès web bloqué). F0/V0/Pmax ci-dessus sont fiables ; le déficit force/vitesse n’est volontairement pas affiché tant que le modèle n’est pas validé — voir <code>lib/performance/fv/optimalProfile.ts</code>.
-     </div>
+
+     {result.deficit_type!=='unavailable'?<div style={S.optCard}>
+      <div style={S.statsGrid}>
+       <div><b>{result.profile_optimal_percent?.toFixed(0)}%</b><small>Profil actuel</small></div>
+       <div><b>100%</b><small>Profil optimal</small></div>
+       <div><b>{result.fv_imbalance_percent?.toFixed(0)}%</b><small>FV imbalance</small></div>
+      </div>
+      <div style={{...S.deficitBadge,background:DEFICIT_COLOR[result.deficit_type]}}>{DEFICIT_LABEL[result.deficit_type]}</div>
+      <p style={S.hint}>Optimisation à titre indicatif — n’est pas une mesure directe de la performance (Pmax et hauteur de saut ci-dessus restent les indicateurs de performance). Le préparateur reste juge de l’orientation d’entraînement.</p>
+     </div>:<div style={S.notice}>Profil optimal / FV imbalance indisponible pour ce test (distance de poussée ou Pmax hors du domaine de validité du modèle — voir les essais saisis).</div>}
     </>}
    </article>
   </section>:<section style={S.grid}>
@@ -167,7 +190,14 @@ export default function ForceVelocityLabPage(){
     <h2>Profil de {player?.display_name||player?.first_name}</h2>
     {result&&result.status==='valid'?<>
      <div style={S.playerStat}><b>{result.pmax_relative?.toFixed(1)} W/kg</b><span>Puissance maximale</span></div>
-     <div style={S.notice}>L’orientation force/vitesse (déficit) sera affichée dès que le modèle de profil optimal sera validé scientifiquement — indisponible pour l’instant, par choix, plutôt que d’afficher un chiffre non vérifié.</div>
+     {result.deficit_type!=='unavailable'?<>
+      <div style={S.statsGrid}>
+       <div><b>{result.profile_optimal_percent?.toFixed(0)}%</b><small>Profil</small></div>
+       <div><b>{result.fv_imbalance_percent?.toFixed(0)}%</b><small>Déséquilibre</small></div>
+       <div><b style={{color:DEFICIT_COLOR[result.deficit_type]}}>{DEFICIT_LABEL[result.deficit_type]}</b><small>Orientation</small></div>
+      </div>
+      <div style={S.notice}>{PLAYER_MESSAGE[result.deficit_type]}</div>
+     </>:<div style={S.notice}>Profil optimal indisponible pour ce test.</div>}
     </>:<p style={S.hint}>Aucun profil calculé pour l’instant sur cette session.</p>}
    </article>
    <article style={S.card}><h2>Historique</h2>{!history.length&&<p style={S.hint}>Aucun test enregistré.</p>}
@@ -220,6 +250,8 @@ const S:Record<string,React.CSSProperties>={
  remove:{border:'1px solid #2B2B31',background:'transparent',color:'#A1A1AA',borderRadius:8,padding:'4px 8px',cursor:'pointer',fontSize:12},
  chart:{width:'100%',background:'#1B1B1F',borderRadius:12},
  statsGrid:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,textAlign:'center'},
+ optCard:{border:'1px solid #2B2B31',borderRadius:12,padding:12,display:'grid',gap:10},
+ deficitBadge:{textAlign:'center',borderRadius:8,padding:'8px 10px',fontWeight:900,fontSize:13,color:'#09090B'},
  playerStat:{display:'flex',flexDirection:'column',gap:4,alignItems:'center',padding:'20px 0'},
  table:{width:'100%',borderCollapse:'collapse',fontSize:13},
 };

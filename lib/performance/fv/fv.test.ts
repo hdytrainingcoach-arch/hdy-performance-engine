@@ -61,18 +61,40 @@ describe('classifyQuality', () => {
 });
 
 describe('calculate_optimal_fv_profile', () => {
-  it('returns pending_model_validation rather than a guessed formula', () => {
-    const result = calculate_optimal_fv_profile({ bodyMassKg: 70, pushOffDistanceM: 0.4, pmax: 3000, gravity: G });
-    expect(result.status).toBe('pending_model_validation');
-    expect(result.modelVersion).toBeNull();
+  // Vérification contre l'exemple chiffré donné par Samozino et al. (2012)
+  // eux-mêmes (Fig. 4 : Pmax=25 W/kg, hPO=0.4 m, push-off vertical →
+  // Sfv_opt=-14.0 N·s·kg⁻¹·m⁻¹). Notre implémentation de l'annexe [A12]-[A13]
+  // donne -14.02, à l'arrondi près des auteurs.
+  it('matches the worked example published in Samozino et al. (2012), Fig. 4', () => {
+    const result = calculate_optimal_fv_profile({ bodyMassKg: 75, pushOffDistanceM: 0.4, pmax: 25, gravity: G });
+    expect(result.status).toBe('computed');
+    if (result.status === 'computed') {
+      expect(result.sfvOpt).toBeCloseTo(-14.02, 1);
+      expect(result.modelVersion).not.toBeNull();
+    }
+  });
+
+  it('derives F0_opt and V0_opt consistent with Pmax = F0·V0/4 and Sfv = -F0/V0', () => {
+    const result = calculate_optimal_fv_profile({ bodyMassKg: 75, pushOffDistanceM: 0.4, pmax: 25, gravity: G });
+    expect(result.status).toBe('computed');
+    if (result.status === 'computed') {
+      expect((result.f0Opt * result.v0Opt) / 4).toBeCloseTo(25, 6);
+      expect(-result.f0Opt / result.v0Opt).toBeCloseTo(result.sfvOpt, 6);
+    }
+  });
+
+  it('refuses to compute for non-positive inputs rather than guessing', () => {
+    expect(calculate_optimal_fv_profile({ bodyMassKg: 75, pushOffDistanceM: 0, pmax: 25, gravity: G }).status).toBe('pending_model_validation');
+    expect(calculate_optimal_fv_profile({ bodyMassKg: 75, pushOffDistanceM: 0.4, pmax: 0, gravity: G }).status).toBe('pending_model_validation');
   });
 });
 
 describe('computeImbalance', () => {
-  it('reports unavailable while the optimal profile is pending validation', () => {
-    const optimal = calculate_optimal_fv_profile({ bodyMassKg: 70, pushOffDistanceM: 0.4, pmax: 3000, gravity: G });
-    const result = computeImbalance(-400, optimal);
-    expect(result.status).toBe('unavailable');
+  it('is computed once a validated optimal profile is available', () => {
+    const optimal = calculate_optimal_fv_profile({ bodyMassKg: 75, pushOffDistanceM: 0.4, pmax: 25, gravity: G });
+    const result = computeImbalance(-14.02, optimal);
+    expect(result.status).toBe('computed');
+    if (result.status === 'computed') expect(result.profileOptimalPercent).toBeCloseTo(100, 0);
   });
   it('classifies force/balanced/velocity deficit once an optimal slope is available', () => {
     // On simule un profil optimal déjà validé pour tester uniquement la classification (§10-11 du cahier des charges).
@@ -149,10 +171,20 @@ describe('computeFvTest (end-to-end)', () => {
     expect(result.quality).toBe('HIGH');
   });
 
-  it('keeps the optimal profile / imbalance unavailable rather than guessing', () => {
+  it('computes the optimal profile and FV imbalance, comparing like-for-like relative units', () => {
     const result = computeFvTest(input);
-    expect(result.optimalProfile?.status).toBe('pending_model_validation');
-    expect(result.imbalance?.status).toBe('unavailable');
+    expect(result.optimalProfile?.status).toBe('computed');
+    expect(result.imbalance?.status).toBe('computed');
+    if (result.optimalProfile?.status === 'computed' && result.imbalance?.status === 'computed') {
+      expect(result.optimalProfile.sfvOpt).toBeLessThan(0);
+      expect(['force', 'balanced', 'velocity']).toContain(result.imbalance.deficitType);
+      // Sfv réel (régression sur force absolue) et Sfv_opt (relatif) ne sont
+      // comparables qu'une fois ramenés à la même unité (§ index.ts) : on
+      // vérifie ici que profileOptimalPercent a bien été calculé sur cette
+      // base normalisée plutôt que sur les valeurs absolues mélangées.
+      const sfvRelative = result.regression!.sfv / result.bodyMassKg;
+      expect(result.imbalance.profileOptimalPercent).toBeCloseTo((sfvRelative / result.optimalProfile.sfvOpt) * 100, 6);
+    }
   });
 
   it('preserves raw per-trial data for later recomputation', () => {

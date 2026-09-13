@@ -73,8 +73,14 @@ export function computeFvTest(input: FvTestInput): FvTestResult {
   if (pmax <= 0) issues.push({ code: 'negative_pmax', message: 'Pmax calculé ≤ 0 : données incohérentes.' });
   if (hasBlockingIssues(issues)) return invalidResult(issues, gravity, input.pushOffDistanceM, input.bodyMassKg, trials);
 
-  const optimalProfile = calculate_optimal_fv_profile({ bodyMassKg: input.bodyMassKg, pushOffDistanceM: input.pushOffDistanceM, pmax, gravity });
-  const imbalance = computeImbalance(regression.sfv, optimalProfile);
+  // Le modèle Samozino (annexe A12-A13) est entièrement défini en grandeurs
+  // relatives à la masse corporelle : Pmax et Sfv doivent donc être
+  // normalisés avant comparaison, même si f0/v0/sfv/pmax sont stockés en
+  // valeurs absolues (cohérent avec fv_tests.pmax_relative, séparé de pmax).
+  const pmaxRelative = pmax / input.bodyMassKg;
+  const sfvRelative = regression.sfv / input.bodyMassKg;
+  const optimalProfile = calculate_optimal_fv_profile({ bodyMassKg: input.bodyMassKg, pushOffDistanceM: input.pushOffDistanceM, pmax: pmaxRelative, gravity });
+  const imbalance = computeImbalance(sfvRelative, optimalProfile);
 
   return {
     status: 'valid',
@@ -82,7 +88,7 @@ export function computeFvTest(input: FvTestInput): FvTestResult {
     trials,
     regression,
     pmax,
-    pmaxRelative: pmax / input.bodyMassKg,
+    pmaxRelative,
     quality: classifyQuality(regression.rSquared),
     optimalProfile,
     imbalance,

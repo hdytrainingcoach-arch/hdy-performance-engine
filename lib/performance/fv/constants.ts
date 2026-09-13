@@ -4,7 +4,8 @@
 // configurables sans toucher au moteur de calcul.
 export const DEFAULT_GRAVITY = 9.81;
 
-export const MODEL_VERSION = 'Samozino_Morin_FV_v1';
+// v1.1 : ajout du profil optimal (Sfv_opt) validé — voir optimalProfile.ts.
+export const MODEL_VERSION = 'Samozino_Morin_FV_v1.1';
 
 export const QUALITY_THRESHOLDS = {
   HIGH_R2: 0.95,
