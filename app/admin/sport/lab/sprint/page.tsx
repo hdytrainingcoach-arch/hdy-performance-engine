@@ -4,9 +4,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useOrg } from '@/lib/org-context';
 import FrameScrubber from '@/components/FrameScrubber';
+import SprintAutoTracker, { type TrackerResult } from '@/components/SprintAutoTracker';
 
 type Row=Record<string,any>;
-type Mode='single'|'twocam';
+type Mode='auto'|'single'|'twocam';
 const FPS_OPTIONS=[30,60,120,240];
 
 function Clip({label,fps,onFile,videoUrl,cur,duration,playing,setCur,setDuration,setPlaying}:{
@@ -24,8 +25,11 @@ export default function SprintLabPage(){
  const {environments,currentEnvId:org,setCurrentEnvId:setOrg,currentTeamId:team,setCurrentTeamId:setTeam,teamsFor,usesTeams}=useOrg();
  const [ready,setReady]=useState(false),[ok,setOk]=useState(false),[players,setPlayers]=useState<Row[]>([]),[defs,setDefs]=useState<Row[]>([]);
  const [playerId,setPlayerId]=useState(''),[defId,setDefId]=useState(''),[testedAt,setTestedAt]=useState(new Date().toISOString().slice(0,16)),[msg,setMsg]=useState('');
- const [mode,setMode]=useState<Mode>('single'),[fps,setFps]=useState(60);
+ const [mode,setMode]=useState<Mode>('auto'),[fps,setFps]=useState(60);
  const [trials,setTrials]=useState<number[]>([]);
+
+ // Mode suivi automatique (comme Metric Sprint) : tracking du corps + repères calibrés
+ const [autoUrl,setAutoUrl]=useState(''),[autoResult,setAutoResult]=useState<TrackerResult|null>(null),[autoMsg,setAutoMsg]=useState('');
 
  // Mode vidéo unique
  const [urlA,setUrlA]=useState(''),[curA,setCurA]=useState(0),[durA,setDurA]=useState(0),[playA,setPlayA]=useState(false);
@@ -45,6 +49,22 @@ export default function SprintLabPage(){
 
  useEffect(()=>{return()=>{if(urlA)URL.revokeObjectURL(urlA)}},[urlA]);
  useEffect(()=>{return()=>{if(urlB)URL.revokeObjectURL(urlB)}},[urlB]);
+ useEffect(()=>{return()=>{if(autoUrl)URL.revokeObjectURL(autoUrl)}},[autoUrl]);
+
+ const targets=useMemo(()=>{
+  const found=visibleDefs.map(d=>Number(d.name.match(/Sprint (\d+)\s*m/)?.[1])).filter(Number.isFinite);
+  return found.length?Array.from(new Set(found)).sort((a,b)=>a-b):[5,10,20,30,40];
+ },[visibleDefs]);
+
+ function onFileAuto(e:React.ChangeEvent<HTMLInputElement>){const f=e.target.files?.[0];if(!f)return;if(autoUrl)URL.revokeObjectURL(autoUrl);setAutoUrl(URL.createObjectURL(f));setAutoResult(null);setAutoMsg('')}
+
+ async function saveSplit(distanceM:number,timeS:number){
+  const def=visibleDefs.find(d=>d.name===`Sprint ${distanceM} m`);
+  if(!def||!playerId){setAutoMsg('Sélectionne un joueur, et vérifie qu’un test "Sprint '+distanceM+' m" existe.');return}
+  const {data:{session}}=await supabase.auth.getSession();
+  const {error}=await supabase.from('test_results').insert({organization_id:org,test_definition_id:def.id,player_id:playerId,tested_at:new Date(testedAt).toISOString(),trials:[Math.round(timeS*1000)/1000],best_value:Math.round(timeS*1000)/1000,mean_value:Math.round(timeS*1000)/1000,device:'HDY LAB (suivi vidéo automatique)',evaluator_user_id:session?.user.id||null,context:{protocol:def.protocol,unit:def.unit,method:'video_auto_tracking',peak_velocity_ms:autoResult?.peakVelocityMs,sample_count:autoResult?.sampleCount}});
+  setAutoMsg(error?error.message:`${def.name} enregistré : ${timeS.toFixed(3)} s ✓`);
+ }
 
  function loadA(f:File){if(urlA)URL.revokeObjectURL(urlA);setUrlA(URL.createObjectURL(f));setDurA(0);setCurA(0);setPlayA(false);setStartT(null);setFinishT(null);setSyncA(null);setStartT2(null)}
  function loadB(f:File){if(urlB)URL.revokeObjectURL(urlB);setUrlB(URL.createObjectURL(f));setDurB(0);setCurB(0);setPlayB(false);setSyncB(null);setFinishT2(null)}
@@ -76,7 +96,7 @@ export default function SprintLabPage(){
 
  return <main style={S.main}>
   <header style={S.header}>
-   <div><span style={S.kicker}>HDY LAB</span><h1>Sprint (chrono vidéo)</h1><p>Portillon vidéo : chronométrage sans cellules, en vue unique sur courte distance ou avec deux caméras synchronisées par un top commun (clap, flash) pour un 30 m/40 m.</p></div>
+   <div><span style={S.kicker}>HDY LAB</span><h1>Sprint (chrono vidéo)</h1><p>Suivi automatique du coureur (vitesse de pointe + splits, comme Metric Sprint) ou portillon vidéo manuel — vue unique ou deux caméras synchronisées par un top commun pour un 30 m/40 m.</p></div>
    <a href='/admin/sport/lab' style={S.back}>← HDY LAB</a>
   </header>
 
@@ -84,14 +104,26 @@ export default function SprintLabPage(){
    <label>Environnement<select value={org} onChange={e=>setOrg(e.target.value)} style={S.input}>{environments.map(e=><option key={e.id} value={e.id}>{e.branding?.label||e.name}</option>)}</select></label>
    {usesTeams(org)&&<label>Équipe<select value={team} onChange={e=>setTeam(e.target.value)} style={S.input}><option value=''>Toutes les équipes</option>{teamsFor(org).map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></label>}
    <label>Joueur<select value={playerId} onChange={e=>setPlayerId(e.target.value)} style={S.input}>{scoped.map(p=><option key={p.id} value={p.id}>{p.display_name||`${p.first_name} ${p.last_name}`}</option>)}</select></label>
-   <label>Distance<select value={defId} onChange={e=>setDefId(e.target.value)} style={S.input}>{visibleDefs.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}</select></label>
-   <label>Fréquence d’image<select value={fps} onChange={e=>setFps(Number(e.target.value))} style={S.input}>{FPS_OPTIONS.map(f=><option key={f} value={f}>{f} im/s</option>)}</select></label>
-   <label>Protocole<select value={mode} onChange={e=>setMode(e.target.value as Mode)} style={S.input}><option value='single'>Vidéo unique</option><option value='twocam'>Deux caméras synchronisées</option></select></label>
+   {mode!=='auto'&&<label>Distance<select value={defId} onChange={e=>setDefId(e.target.value)} style={S.input}>{visibleDefs.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}</select></label>}
+   {mode!=='auto'&&<label>Fréquence d’image<select value={fps} onChange={e=>setFps(Number(e.target.value))} style={S.input}>{FPS_OPTIONS.map(f=><option key={f} value={f}>{f} im/s</option>)}</select></label>}
+   <label>Protocole<select value={mode} onChange={e=>setMode(e.target.value as Mode)} style={S.input}><option value='auto'>Suivi automatique (vitesse + splits)</option><option value='single'>Vidéo unique (portillon manuel)</option><option value='twocam'>Deux caméras synchronisées</option></select></label>
   </section>
 
   {msg&&<div style={S.notice}>{msg}</div>}
 
-  <section style={S.grid}>
+  {mode==='auto'?<section style={S.grid}>
+   <article style={S.card}>
+    <h2>Suivi automatique</h2>
+    <input type='file' accept='video/*' capture='environment' onChange={onFileAuto} style={S.input}/>
+    {autoUrl&&<SprintAutoTracker videoUrl={autoUrl} targets={targets} onDone={setAutoResult}/>}
+   </article>
+   <article style={S.card}>
+    <h2>Splits détectés</h2>
+    {!autoResult&&<p style={S.hint}>Lance l’analyse pour voir les splits détectés.</p>}
+    {autoMsg&&<div style={S.notice}>{autoMsg}</div>}
+    {autoResult?.splits.map(s=><div key={s.distanceM} style={S.row}><span><b>{s.distanceM} m</b></span><span style={S.rowRight}><strong>{s.timeS.toFixed(3)} s</strong><button onClick={()=>saveSplit(s.distanceM,s.timeS)} style={S.markBtn}>Enregistrer</button></span></div>)}
+   </article>
+  </section>:<section style={S.grid}>
    <article style={S.card}>
     {mode==='single'?<>
      <h2>1 · Vidéo du sprint</h2>
@@ -126,7 +158,7 @@ export default function SprintLabPage(){
     <label>Date / heure<input type='datetime-local' value={testedAt} onChange={e=>setTestedAt(e.target.value)} style={S.input}/></label>
     <button onClick={save} style={S.primary}>Enregistrer le test</button>
    </article>
-  </section>
+  </section>}
  </main>
 }
 
