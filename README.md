@@ -13,6 +13,11 @@ PWA/mobile-first de monitoring joueur pour HDY Training / Diambars FC.
 - Programmation d'entraînement : banque d'exercices + contenu de séance (LOT 11)
 - Calendrier des séances et disponibilités, communication staff → joueur, tests physiques avec normes par poste, corrélation charge interne/externe (LOT 11 — voir `docs/LOT11_REPORT.md`)
 
+## HDY Coach (`/coach`)
+Application parallèle, même dépôt et même backend : interface staff simplifiée centrée sur la
+banque d'exercices et la programmation musculation / préparation physique, sans les modules
+équipe/organisation multi-marque de `/admin`. Voir `docs/LOT12_REPORT.md`.
+
 ## Principes produit
 - Une action principale par écran
 - OPR < 45 s, RPE < 30 s
