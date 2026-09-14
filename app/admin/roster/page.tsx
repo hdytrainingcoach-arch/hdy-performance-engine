@@ -153,7 +153,7 @@ export default function RosterPage(){
 
   return <main style={S.main}>
     <header style={S.header}>
-      <div><span style={S.kicker}>{currentEnv?.branding?.label||currentEnv?.name||'EFFECTIF'}</span><h1 style={S.h1}>Effectifs officiels</h1><p style={S.sub}>{players.filter(p=>p.active).length} joueurs actifs{isAdmin?' · gestion des équipes et des doublons':''}.</p></div>
+      <p style={S.sub}>{players.filter(p=>p.active).length} joueurs actifs{isAdmin?' · gestion des équipes et des doublons':''}.</p>
       <div style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
         {isAdmin&&<label style={S.inactiveToggle}><input type='checkbox' checked={showInactive} onChange={e=>setShowInactive(e.target.checked)}/> Afficher les désactivés</label>}
         <button onClick={exportProfiles} style={S.exportBtn}>Exporter CSV (profils)</button>

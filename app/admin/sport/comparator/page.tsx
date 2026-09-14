@@ -100,14 +100,7 @@ export default function Comparator() {
 
   return (
     <main style={S.main}>
-      <header style={S.header}>
-        <div>
-          <span style={S.kicker}>SPORT &amp; PERFORMANCE</span>
-          <h1 style={S.h1}>Comparateur athlétique</h1>
-          <p style={S.sub}>
-            Comparer jusqu’à 4 athlètes sur leurs derniers résultats, sans mélanger des protocoles différents.
-          </p>
-        </div>
+      <header style={{ ...S.header, justifyContent: 'flex-end' }}>
         <a href="/admin/sport" style={S.back}>← Sport &amp; Performance</a>
       </header>
 

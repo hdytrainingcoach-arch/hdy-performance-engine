@@ -154,7 +154,7 @@ export default function MedicalDossier() {
           <h1 style={S.h1}>{name}</h1>
           <p style={S.sub}>{player.primary_position || player.position || 'Joueur'} · accès personnel médical uniquement</p>
         </div>
-        <a href="/admin/medical" style={S.back}>← Médical</a>
+        <a href="/admin/medical" style={S.back}>← Retour à l&apos;effectif médical</a>
       </header>
 
       {msg && <p style={S.notice}>{msg}</p>}

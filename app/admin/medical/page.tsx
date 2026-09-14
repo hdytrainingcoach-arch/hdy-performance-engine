@@ -90,15 +90,11 @@ export default function MedicalRoster() {
 
   return (
     <main style={S.main}>
-      <header style={S.header}>
-        <div>
-          <span style={S.kicker}>DOSSIER MÉDICAL PROTÉGÉ · CONFIDENTIEL</span>
-          <h1 style={S.h1}>Suivi médical</h1>
-          <p style={S.sub}>Antécédents, blessures, retour progressif. Le coach ne voit que le statut fonctionnel partagé.</p>
-        </div>
+      <header style={{...S.header,justifyContent:'flex-end'}}>
         <button onClick={exportMedical} style={{...S.back,cursor:'pointer'}}>Export CSV médical autorisé</button>
         <a href="/admin" style={S.back}>← Portail</a>
       </header>
+      <p style={{...S.sub,maxWidth:1200,margin:'0 auto 14px'}}>Le coach ne voit que le statut fonctionnel partagé ci-dessous — jamais le diagnostic ni le détail médical.</p>
 
       <section style={S.filters}>
         <label>Environnement
