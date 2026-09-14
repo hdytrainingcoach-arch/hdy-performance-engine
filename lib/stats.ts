@@ -149,6 +149,17 @@ export function reviewSignal(input: {
   return { level: 'green', reasons: reasons.length ? reasons : ['Proche de l’habitude'] };
 }
 
+/**
+ * Ratio charge interne (sRPE, UA) / charge externe (GPS, index du fournisseur)
+ * pour une même séance. Sert à repérer une dérive d'efficience (le joueur se
+ * sent nettement plus sollicité que ce que le GPS mesure, ou l'inverse) — un
+ * signal de contexte, jamais une conclusion automatique.
+ */
+export function loadRatio(internal: number | null, external: number | null): number | null {
+  if (internal === null || external === null || external <= 0) return null;
+  return internal / external;
+}
+
 export function fmtPct(v: number | null, digits = 0): string {
   if (v === null) return '—';
   const s = (v * 100).toFixed(digits);

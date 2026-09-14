@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  fmtNum, fmtPct, mean, median, pctChange, percentile, reviewSignal,
+  fmtNum, fmtPct, loadRatio, mean, median, pctChange, percentile, reviewSignal,
   stddev, summarize, toNum, zScore,
 } from '@/lib/stats';
 
@@ -153,5 +153,17 @@ describe('formatage', () => {
   it('fmtNum arrondit et gère null', () => {
     expect(fmtNum(3.14159, 2)).toBe('3.14');
     expect(fmtNum(null)).toBe('—');
+  });
+});
+
+describe('loadRatio', () => {
+  it('calcule charge interne / charge externe', () => {
+    expect(loadRatio(450, 300)).toBe(1.5);
+  });
+  it('renvoie null si une valeur manque ou si la charge externe est nulle/négative', () => {
+    expect(loadRatio(null, 300)).toBeNull();
+    expect(loadRatio(450, null)).toBeNull();
+    expect(loadRatio(450, 0)).toBeNull();
+    expect(loadRatio(450, -10)).toBeNull();
   });
 });

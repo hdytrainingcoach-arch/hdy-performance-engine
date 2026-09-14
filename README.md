@@ -10,6 +10,8 @@ PWA/mobile-first de monitoring joueur pour HDY Training / Diambars FC.
 - Import GPS CSV et Excel/Numbers converti en `.xlsx`
 - Historique longitudinal individuel et comparaison du joueur à lui-même
 - Gestion visuelle du mode faible connexion
+- Programmation d'entraînement : banque d'exercices + contenu de séance (LOT 11)
+- Calendrier des séances et disponibilités, communication staff → joueur, tests physiques avec normes par poste, corrélation charge interne/externe (LOT 11 — voir `docs/LOT11_REPORT.md`)
 
 ## Principes produit
 - Une action principale par écran

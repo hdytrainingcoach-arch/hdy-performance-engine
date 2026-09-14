@@ -2,13 +2,17 @@
 
 export default function Sport(){
  const cards=[
-  {href:'/admin/sport/tests',title:'Tests & évaluations',desc:'Saisie des résultats, protocoles actifs et suivi des performances.'},
-  {href:'/admin/sport/sessions',title:'Séances',desc:'Créer les séances d’équipe et préparer le suivi RPE associé.'},
+  {href:'/admin/sport/exercises',title:'Banque d’exercices',desc:'Bibliothèque réutilisable (technique, physique, tactique…) pour construire le contenu des séances.'},
+  {href:'/admin/sport/sessions',title:'Séances',desc:'Créer les séances d’équipe, leur programme d’exercices et préparer le suivi RPE associé.'},
+  {href:'/admin/sport/calendar',title:'Calendrier',desc:'Planning mensuel des séances par équipe, avec disponibilités déclarées.'},
+  {href:'/admin/sport/tests',title:'Tests & évaluations',desc:'Saisie des résultats, protocoles actifs, normes par poste et suivi des performances.'},
   {href:'/admin/sport/gps',title:'GPS · Charge externe',desc:'Importer CSV ou Excel/Numbers, calculer la charge et alimenter le suivi longitudinal.'},
+  {href:'/admin/sport/charge',title:'Charge · corrélation interne/externe',desc:'Croiser sRPE (charge interne) et GPS (charge externe) sur une même séance pour repérer une dérive.'},
   {href:'/admin/sport/alerts',title:'Alertes médicales & performance',desc:'Signaux automatiques ACWR à revoir par le staff, avec acquittement et clôture tracés.'},
   {href:'/admin/sport/hrv',title:'HRV · récupération (HDY Elite)',desc:'Réservé à HDY Elite. Mesures HRV pour les joueurs suivis individuellement.'},
   {href:'/admin/sport/monitoring',title:'Monitoring',desc:'Hooper, RPE Foster, douleurs, GPS et accès au dossier longitudinal de chaque joueur.'},
   {href:'/admin/sport/comparator',title:'Comparateur',desc:'Comparer jusqu’à 4 profils athlétiques avec lecture descriptive et protocoles cohérents.'},
+  {href:'/admin/sport/communication',title:'Communication',desc:'Annonces staff → joueurs par organisation ou équipe, avec accusé de lecture.'},
  ];
  return <main style={S.main}><header style={S.headerLite}><a href='/admin' style={S.back}>← Portail</a></header><section style={S.grid}>{cards.map(c=><a key={c.title} href={c.href} style={S.card}><span style={S.badge}>PERFORMANCE</span><h2>{c.title}</h2><p>{c.desc}</p><b>Ouvrir →</b></a>)}</section><section style={S.split}><div><h2>Décision assistée</h2><p>Les alertes automatiques servent à déclencher une revue staff. Elles ne posent pas de diagnostic et n’excluent jamais automatiquement un joueur.</p></div><a href='/admin/administration' style={S.admin}>Accéder à Administration →</a></section></main>
 }
