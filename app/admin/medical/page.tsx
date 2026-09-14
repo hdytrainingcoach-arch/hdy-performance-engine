@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useOrg } from '@/lib/org-context';
 import { AVAILABILITY_COLOR, AVAILABILITY_LABEL, hasMedicalAccess } from '@/lib/medical';
@@ -8,7 +9,10 @@ import { exportCsv, timestampedName } from '@/lib/csv-export';
 
 type Row = Record<string, any>;
 
+const AVAILABILITY_PRIORITY: Record<string, number> = { unavailable: 0, medical_care: 1, modified: 2, full: 4 };
+
 export default function MedicalRoster() {
+  const router = useRouter();
   const { environments, currentEnvId: org, setCurrentEnvId: setOrg, currentTeamId: team, setCurrentTeamId: setTeam, teamsFor, usesTeams } = useOrg();
   const [ready, setReady] = useState(false);
   const [allowed, setAllowed] = useState(false);
@@ -16,6 +20,7 @@ export default function MedicalRoster() {
   const [statuses, setStatuses] = useState<Row[]>([]);
   const [openEvents, setOpenEvents] = useState<Row[]>([]);
   const [search, setSearch] = useState('');
+  const [availFilter, setAvailFilter] = useState<string>('');
 
   const scopeTeam = usesTeams(org) && team ? team : '';
 
@@ -55,8 +60,15 @@ export default function MedicalRoster() {
   const rows = useMemo<Row[]>(
     () => players
       .filter((p) => `${p.display_name ?? ''} ${p.first_name} ${p.last_name}`.toLowerCase().includes(search.toLowerCase()))
-      .map((p): Row => ({ ...p, st: statusBy.get(p.id), ev: eventsBy.get(p.id) ?? [] })),
-    [players, search, statusBy, eventsBy],
+      .map((p): Row => ({ ...p, st: statusBy.get(p.id), ev: eventsBy.get(p.id) ?? [] }))
+      .filter((p) => !availFilter || (p.st?.availability ?? 'none') === availFilter)
+      .sort((a, b) => {
+        const pa = AVAILABILITY_PRIORITY[a.st?.availability ?? 'none'] ?? 3;
+        const pb = AVAILABILITY_PRIORITY[b.st?.availability ?? 'none'] ?? 3;
+        if (pa !== pb) return pa - pb;
+        return (a.display_name || '').localeCompare(b.display_name || '');
+      }),
+    [players, search, statusBy, eventsBy, availFilter],
   );
 
   const counts = useMemo(() => {
@@ -115,13 +127,16 @@ export default function MedicalRoster() {
 
       <section style={S.metrics}>
         {[
-          ['Disponibles', counts.full, '#8ef0b0'],
-          ['Travail adapté', counts.modified, '#f5c96b'],
-          ['Indisponibles', counts.unavailable, '#ff8a8f'],
-          ['En soins', counts.medical_care, '#c9b8ff'],
-          ['Sans statut', counts.none, '#a1a1aa'],
-        ].map(([l, n, c]) => (
-          <div key={l as string} style={S.metric}><strong style={{ color: c as string }}>{n as number}</strong><small>{l as string}</small></div>
+          ['Tous', players.length, '#fafafa', ''],
+          ['Disponibles', counts.full, '#8ef0b0', 'full'],
+          ['Travail adapté', counts.modified, '#f5c96b', 'modified'],
+          ['Indisponibles', counts.unavailable, '#ff8a8f', 'unavailable'],
+          ['En soins', counts.medical_care, '#c9b8ff', 'medical_care'],
+          ['Sans statut', counts.none, '#a1a1aa', 'none'],
+        ].map(([l, n, c, key]) => (
+          <button key={l as string} onClick={() => setAvailFilter(availFilter === key ? '' : (key as string))} style={{ ...S.metric, ...(availFilter === key ? S.metricOn : {}) }}>
+            <strong style={{ color: c as string }}>{n as number}</strong><small>{l as string}</small>
+          </button>
         ))}
       </section>
 
@@ -134,8 +149,8 @@ export default function MedicalRoster() {
                 const a = p.st?.availability ?? null;
                 const avC = a ? AVAILABILITY_COLOR[a] : null;
                 return (
-                  <tr key={p.id}>
-                    <td><a href={`/admin/medical/${p.id}`} style={S.link}><b>{p.display_name || `${p.first_name} ${p.last_name}`}</b><small style={S.pos}>{p.primary_position || p.position || '—'}</small></a></td>
+                  <tr key={p.id} onClick={() => router.push(`/admin/medical/${p.id}`)} style={S.row}>
+                    <td><a href={`/admin/medical/${p.id}`} onClick={(e) => e.stopPropagation()} style={S.link}><b>{p.display_name || `${p.first_name} ${p.last_name}`}</b><small style={S.pos}>{p.primary_position || p.position || '—'}</small></a></td>
                     <td>{a ? <span style={{ ...S.badge, background: avC!.bg, color: avC!.fg }}>{AVAILABILITY_LABEL[a]}</span> : <span style={S.muted}>—</span>}</td>
                     <td style={S.small}>{p.st?.shared_restrictions || '—'}</td>
                     <td style={S.small}>{p.ev.length ? p.ev.map((e: Row) => e.body_zone || 'blessure').join(', ') : '—'}</td>
@@ -163,10 +178,12 @@ const S: Record<string, React.CSSProperties> = {
   filters: { maxWidth: 1200, margin: '0 auto 14px', display: 'flex', gap: 12, alignItems: 'end', flexWrap: 'wrap', background: '#141416', border: '1px solid #2B2B31', borderRadius: 16, padding: 14 },
   input: { display: 'block', height: 40, marginTop: 5, background: '#1B1B1F', color: '#fff', border: '1px solid #34343A', borderRadius: 9, padding: '0 10px' },
   metrics: { maxWidth: 1200, margin: '0 auto 14px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(120px,1fr))', gap: 10 },
-  metric: { background: '#141416', border: '1px solid #2B2B31', borderRadius: 12, padding: '12px 10px', display: 'grid', gap: 3, textAlign: 'center' },
+  metric: { background: '#141416', border: '1px solid #2B2B31', borderRadius: 12, padding: '12px 10px', display: 'grid', gap: 3, textAlign: 'center', cursor: 'pointer', font: 'inherit', color: 'inherit' },
+  metricOn: { borderColor: '#7c7c86', background: '#1d1d20' },
   card: { maxWidth: 1200, margin: '0 auto', background: '#141416', border: '1px solid #2B2B31', borderRadius: 18, padding: 16 },
   tableWrap: { overflowX: 'auto' },
   table: { width: '100%', borderCollapse: 'collapse', fontSize: 13 },
+  row: { cursor: 'pointer' },
   link: { color: '#fff', textDecoration: 'none', display: 'grid', gap: 2 },
   pos: { color: '#a1a1aa', fontSize: 12 },
   badge: { borderRadius: 999, padding: '4px 9px', fontWeight: 900, fontSize: 11 },

@@ -145,6 +145,7 @@ export default function MedicalDossier() {
 
   const name = player.display_name || `${player.first_name} ${player.last_name}`;
   const avC = AVAILABILITY_COLOR[status.availability] ?? AVAILABILITY_COLOR.full;
+  const hasHistory = HISTORY_FIELDS.some(([k]) => !!history[k]);
 
   return (
     <main style={S.main}>
@@ -189,31 +190,40 @@ export default function MedicalDossier() {
       </section>
 
       {/* Antécédents */}
-      <section style={S.card}>
-        <h2 style={S.h2}>Antécédents médicaux</h2>
-        <div style={S.grid2}>
+      <details style={S.card} open={hasHistory}>
+        <summary style={S.summary}>
+          <h2 style={{ ...S.h2, display: 'inline' }}>Antécédents médicaux</h2>
+          <span style={S.hint}>{hasHistory ? 'Renseignés — cliquer pour modifier' : 'Non renseignés — cliquer pour compléter'}</span>
+        </summary>
+        <div style={{ ...S.grid2, marginTop: 12 }}>
           {HISTORY_FIELDS.map(([k, label]) => (
             <label key={k}>{label}
               <textarea value={history[k] ?? ''} onChange={(e) => setHistory({ ...history, [k]: e.target.value })} style={S.textareaSm} />
             </label>
           ))}
         </div>
-        <button onClick={saveHistory} style={S.primary}>Enregistrer les antécédents</button>
-      </section>
+        <button onClick={saveHistory} style={{ ...S.primary, marginTop: 12 }}>Enregistrer les antécédents</button>
+      </details>
 
       {/* Nouvel / édition événement */}
       <section style={S.card}>
         <h2 style={S.h2}>{editingId ? 'Modifier l’événement' : 'Nouvel événement médical'}</h2>
+
+        <h3 style={S.h3}>Contexte</h3>
         <div style={S.grid3}>
           <label>Date d’apparition<input type="date" value={evForm.onset_date} onChange={(e) => setEvForm({ ...evForm, onset_date: e.target.value })} style={S.input} /></label>
           <label>Contexte<select value={evForm.context} onChange={(e) => setEvForm({ ...evForm, context: e.target.value })} style={S.input}>{Object.entries(CONTEXT_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
           <label>Zone anatomique<input value={evForm.body_zone} onChange={(e) => setEvForm({ ...evForm, body_zone: e.target.value })} placeholder="Ischio-jambier, cheville…" style={S.input} /></label>
           <label>Latéralité<select value={evForm.laterality} onChange={(e) => setEvForm({ ...evForm, laterality: e.target.value })} style={S.input}>{Object.entries(LATERALITY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
           <label>Mécanisme<select value={evForm.mechanism} onChange={(e) => setEvForm({ ...evForm, mechanism: e.target.value })} style={S.input}>{Object.entries(MECHANISM_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
+          <label style={S.checkLabel}><input type="checkbox" checked={!!evForm.is_recurrence} onChange={(e) => setEvForm({ ...evForm, is_recurrence: e.target.checked })} /> Récidive</label>
+        </div>
+
+        <h3 style={S.h3}>Évaluation clinique</h3>
+        <div style={S.grid3}>
           <label>Gravité<select value={evForm.severity} onChange={(e) => setEvForm({ ...evForm, severity: e.target.value })} style={S.input}>{Object.entries(SEVERITY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
           <label>Douleur (0–10)<input type="number" min={0} max={10} value={evForm.pain_level} onChange={(e) => setEvForm({ ...evForm, pain_level: e.target.value })} style={S.input} /></label>
           <label>Statut<select value={evForm.status} onChange={(e) => setEvForm({ ...evForm, status: e.target.value })} style={S.input}>{Object.entries(EVENT_STATUS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
-          <label style={S.checkLabel}><input type="checkbox" checked={!!evForm.is_recurrence} onChange={(e) => setEvForm({ ...evForm, is_recurrence: e.target.checked })} /> Récidive</label>
         </div>
         <div style={S.grid2}>
           <label>Diagnostic<textarea value={evForm.diagnosis} onChange={(e) => setEvForm({ ...evForm, diagnosis: e.target.value })} style={S.textareaSm} /></label>
@@ -290,6 +300,7 @@ const S: Record<string, React.CSSProperties> = {
   notice: { maxWidth: 1100, margin: '0 auto 12px', background: '#19191c', border: '1px solid #2b2b31', padding: 12, borderRadius: 10 },
   card: { maxWidth: 1100, margin: '0 auto 14px', background: '#141416', border: '1px solid #2B2B31', borderRadius: 18, padding: 18, display: 'grid', gap: 12 },
   cardHead: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' },
+  summary: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', cursor: 'pointer', listStyle: 'none' },
   hint: { color: '#a1a1aa', fontSize: 12, margin: 0 },
   badge: { borderRadius: 999, padding: '5px 11px', fontWeight: 900, fontSize: 12 },
   grid2: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 10 },
