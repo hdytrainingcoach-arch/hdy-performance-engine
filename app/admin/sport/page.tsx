@@ -3,6 +3,7 @@
 export default function Sport(){
  const cards=[
   {href:'/admin/sport/tests',title:'Tests & évaluations',desc:'Saisie des résultats, protocoles actifs et suivi des performances.'},
+  {href:'/admin/sport/lab',title:'HDY LAB',desc:'Suite de tests de terrain sans matériel dédié : sauts vidéo, sprint chronométré, VBT, écrans fonctionnels, mobilité au capteur.'},
   {href:'/admin/sport/sessions',title:'Séances',desc:'Créer les séances d’équipe et préparer le suivi RPE associé.'},
   {href:'/admin/sport/gps',title:'GPS · Charge externe',desc:'Importer CSV ou Excel/Numbers, calculer la charge et alimenter le suivi longitudinal.'},
   {href:'/admin/sport/alerts',title:'Alertes médicales & performance',desc:'Signaux automatiques ACWR à revoir par le staff, avec acquittement et clôture tracés.'},
