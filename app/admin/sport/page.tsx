@@ -1,12 +1,16 @@
 'use client';
 
+import { useOrg } from '@/lib/org-context';
+
 export default function Sport(){
+ const {currentEnv}=useOrg();
+ const isElite=currentEnv?.type==='elite_performance';
  const cards=[
   {href:'/admin/sport/tests',title:'Tests & évaluations',desc:'Saisie des résultats, protocoles actifs et suivi des performances.'},
   {href:'/admin/sport/sessions',title:'Séances',desc:'Créer les séances d’équipe et préparer le suivi RPE associé.'},
   {href:'/admin/sport/gps',title:'GPS · Charge externe',desc:'Importer CSV ou Excel/Numbers, calculer la charge et alimenter le suivi longitudinal.'},
   {href:'/admin/sport/alerts',title:'Alertes médicales & performance',desc:'Signaux automatiques ACWR à revoir par le staff, avec acquittement et clôture tracés.'},
-  {href:'/admin/sport/hrv',title:'HRV · récupération (HDY Elite)',desc:'Réservé à HDY Elite. Mesures HRV pour les joueurs suivis individuellement.'},
+  ...(isElite?[{href:'/admin/sport/hrv',title:'HRV · récupération',desc:'Mesures HRV pour les joueurs suivis individuellement (HDY Elite).'}]:[]),
   {href:'/admin/sport/monitoring',title:'Monitoring',desc:'Hooper, RPE Foster, douleurs, GPS et accès au dossier longitudinal de chaque joueur.'},
   {href:'/admin/sport/comparator',title:'Comparateur',desc:'Comparer jusqu’à 4 profils athlétiques avec lecture descriptive et protocoles cohérents.'},
  ];

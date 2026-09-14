@@ -14,6 +14,7 @@ function pageIdentity(path:string):PageIdentity{
   if(path.startsWith('/admin/administration/staff')) return {key:'staff',label:'Staff & Accès',eyebrow:'PEOPLE · PERMISSIONS',description:'Membres, rôles, invitations et périmètres d’accès.'};
   if(path.startsWith('/admin/administration')||path.startsWith('/admin/manage')||path.startsWith('/admin/organizations')||path.startsWith('/admin/setup')) return {key:'administration',label:'Administration',eyebrow:'ORGANISATION · CONTROL',description:'Organisation, équipes, comptes, droits et configuration.'};
   if(path.startsWith('/admin/registration')||path.startsWith('/admin/roster')) return {key:'players',label:'Joueurs',eyebrow:'PEOPLE · PROFILES',description:'Effectif, dossiers joueurs et informations longitudinales.'};
+  if(path.startsWith('/admin/medical')) return {key:'medical',label:'Suivi médical',eyebrow:'MEDICAL · CONFIDENTIEL',description:'Antécédents, blessures, retour progressif. Accès réservé au personnel médical.'};
   if(path.startsWith('/admin/sport/gps')) return {key:'gps',label:'GPS & Charge externe',eyebrow:'LOAD · SPEED · EXPOSURE',description:'Distance, HSR, sprints, accélérations, Vmax, charge et tendances.'};
   if(path.startsWith('/admin/sport/tests')) return {key:'results',label:'Résultats & Tests',eyebrow:'TESTING · PROGRESS',description:'Tests physiques, meilleurs résultats et évolution dans le temps.'};
   if(path.startsWith('/admin/sport/comparator')) return {key:'comparator',label:'Comparatif',eyebrow:'PROFILES · TALENT',description:'Comparer les profils athlétiques pour éclairer la décision staff.'};
@@ -24,6 +25,14 @@ function pageIdentity(path:string):PageIdentity{
   if(path.startsWith('/admin/sport')) return {key:'sport',label:'Sport & Performance',eyebrow:'PERFORMANCE · OPERATIONS',description:'Charge, préparation, séances, alertes, GPS, tests et monitoring.'};
   return {key:'home',label:'Centre de gestion',eyebrow:'PERFORMANCE · PEOPLE · PROGRESS',description:'Piloter les organisations et les environnements de performance.'};
 }
+
+const QUICK_NAV=[
+  {key:'players',label:'Effectif',href:'/admin/roster'},
+  {key:'sport',label:'Sport & Performance',href:'/admin/sport'},
+  {key:'medical',label:'Médical',href:'/admin/medical'},
+  {key:'staff',label:'Staff & accès',href:'/admin/administration/staff'},
+  {key:'administration',label:'Administration',href:'/admin/administration'},
+];
 
 export default function AdminBrandFrame({children}:{children:React.ReactNode}){
   const [mode,setMode]=useState<BrandMode>('loading');
@@ -87,6 +96,9 @@ export default function AdminBrandFrame({children}:{children:React.ReactNode}){
       </a>
       <div className='adminBrandActions'><span className='adminEnvironmentPill'>{identity.eyebrow}</span><a href={installHref} className='adminInstallLink'>Installer</a></div>
     </header>
+    <nav className='adminQuickNav' aria-label='Navigation principale'>
+      {QUICK_NAV.map(n=><a key={n.key} href={n.href} className={identity.key===n.key?'active':''}>{n.label}</a>)}
+    </nav>
     <section className={`adminPageContext page-${identity.key}`}>
       <div><span>{identity.eyebrow}</span><strong>{identity.label}</strong><p>{identity.description}</p></div>
       <div className='adminPageBrandMarkV2' aria-hidden='true'><BrandLogo brand={brand} variant='page' decorative/></div>

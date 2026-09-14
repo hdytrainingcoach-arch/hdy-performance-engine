@@ -3,9 +3,10 @@
 export default function Administration(){
  const cards=[
   {href:'/admin/registration',title:'Inscription joueur',desc:'Créer le dossier administratif complet : identité, famille, scolarité, historique clubs.'},
-  {href:'/admin/organizations',title:'Organisations & équipes',desc:'Gérer les environnements et les périmètres d’équipes.'},
+  {href:'/admin/roster',title:'Effectif & équipes',desc:'Voir les joueurs, gérer les équipes, déplacer ou désactiver un joueur, envoyer les invitations.'},
   {href:'/admin/administration/staff',title:'Staff & accès',desc:'Rôles, permissions, comptes actifs et accès par environnement.'},
   {href:'/admin/medical',title:'Suivi médical',desc:'Antécédents, blessures, retour progressif (RTR/RTT/RTP). Accès réservé au personnel médical.'},
+  {href:'/admin/manage',title:'Dossier complet & tests',desc:'Identité, contrat, agent, saisie de tests physiques et droits staff détaillés.'},
  ];
  return <main style={S.main}><header style={S.headerLite}><a href='/admin' style={S.back}>← Portail</a></header><section style={S.grid}>{cards.map(c=><a key={c.href} href={c.href} style={S.card}><span style={S.badge}>ADMIN</span><h2>{c.title}</h2><p>{c.desc}</p><b>Ouvrir →</b></a>)}</section><section style={S.split}><div><h2>Centre de contrôle</h2><p>Créer et mettre à jour les dossiers, comptes, organisations, rôles et permissions.</p></div><a href='/admin/sport' style={S.sport}>Accéder à Sport & Performance →</a></section></main>
 }
