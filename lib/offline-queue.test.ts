@@ -24,6 +24,18 @@ vi.mock('@/lib/supabase', () => ({
         state.inserted.push({ table, row });
         return { error: null };
       },
+      // simule ON CONFLICT (session_id, player_id) DO UPDATE, comme session_rpe en base.
+      upsert: async (row: Record<string, unknown>) => {
+        if (state.failNext > 0) {
+          state.failNext -= 1;
+          return { error: { code: 'NETWORK', message: 'réseau indisponible' } };
+        }
+        const key = `${row.session_id}:${row.player_id}`;
+        const existing = state.inserted.findIndex((i) => i.table === table && `${i.row.session_id}:${i.row.player_id}` === key);
+        if (existing >= 0) state.inserted[existing] = { table, row };
+        else state.inserted.push({ table, row });
+        return { error: null };
+      },
     }),
   },
 }));
@@ -119,6 +131,15 @@ describe('file offline — Hooper / RPE / douleur', () => {
     expect(c.error).toBe(0);
     expect(c.synced).toBe(1);
     expect(state.inserted).toHaveLength(1);
+  });
+
+  it('une correction RPE pour la même séance remplace la valeur précédente au lieu d’être ignorée', async () => {
+    await enqueue('rpe', { organization_id: 'o1', session_id: 's1', player_id: 'p1', rpe: 4, actual_duration_min: 60 });
+    await enqueue('rpe', { organization_id: 'o1', session_id: 's1', player_id: 'p1', rpe: 8, actual_duration_min: 75 });
+    await flush();
+    const rows = state.inserted.filter((i) => i.table === 'session_rpe');
+    expect(rows).toHaveLength(1);
+    expect(rows[0].row.rpe).toBe(8);
   });
 
   it('deux saisies distinctes produisent deux lignes', async () => {

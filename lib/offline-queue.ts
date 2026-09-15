@@ -35,6 +35,13 @@ const TABLE: Record<QueueKind, string> = {
   pain: 'pain_declarations',
 };
 
+// session_rpe a une contrainte unique (session_id, player_id) : un joueur qui se
+// trompe et renvoie son RPE pour la même séance doit voir sa correction prise en
+// compte, pas silencieusement ignorée comme un simple doublon de réseau.
+const CONFLICT_TARGET: Partial<Record<QueueKind, string>> = {
+  rpe: 'session_id,player_id',
+};
+
 function hasIDB() {
   return typeof window !== 'undefined' && 'indexedDB' in window;
 }
@@ -140,7 +147,10 @@ async function syncItem(item: QueueItem): Promise<{ ok: boolean; error?: string 
     tz: item.tz,
     source: item.capturedOffline ? 'offline' : 'online',
   };
-  const { error } = await supabase.from(TABLE[item.kind]).insert(row);
+  const target = CONFLICT_TARGET[item.kind];
+  const { error } = target
+    ? await supabase.from(TABLE[item.kind]).upsert(row, { onConflict: target })
+    : await supabase.from(TABLE[item.kind]).insert(row);
   if (!error) return { ok: true };
   if (isDuplicate(error)) return { ok: true }; // déjà enregistré → pas de doublon
   return { ok: false, error: error.message };
