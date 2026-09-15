@@ -8,7 +8,9 @@ import { supabase } from '@/lib/supabase';
 const NAV = [
   { href: '/coach', label: 'Aujourd’hui', exact: true },
   { href: '/coach/sessions', label: 'Séances' },
+  { href: '/coach/templates', label: 'Modèles' },
   { href: '/coach/exercises', label: 'Exercices' },
+  { href: '/coach/players', label: 'Joueurs' },
   { href: '/coach/calendar', label: 'Calendrier' },
 ];
 
@@ -80,6 +82,7 @@ export default function CoachShell({ children }: { children: React.ReactNode }) 
             </select>
           )}
           {scope && scopes.length === 1 && <span style={S.scopePill}>{scope.teamName ? `${scope.organizationLabel} · ${scope.teamName}` : scope.organizationLabel}</span>}
+          <a href="/admin/sport" style={S.crossLink}>HDY Performance Engine →</a>
           <button onClick={logout} style={S.logoutBtn} title={displayName}>Déconnexion</button>
         </div>
       </header>
@@ -112,6 +115,7 @@ const S: Record<string, React.CSSProperties> = {
   headerRight: { marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 },
   scopeSelect: { height: 36, background: '#16181B', color: '#fff', border: '1px solid #2B2B31', borderRadius: 8, padding: '0 10px', fontSize: 12 },
   scopePill: { fontSize: 12, color: '#A1A1AA', border: '1px solid #2B2B31', borderRadius: 999, padding: '6px 12px' },
+  crossLink: { fontSize: 12, color: '#A1A1AA', textDecoration: 'none', whiteSpace: 'nowrap' },
   logoutBtn: { border: '1px solid #2B2B31', borderRadius: 8, padding: '8px 12px', fontWeight: 700, color: '#fff', background: 'transparent', cursor: 'pointer', fontSize: 12 },
   content: { padding: '24px', maxWidth: 1100, margin: '0 auto' },
 };

@@ -160,6 +160,17 @@ export function loadRatio(internal: number | null, external: number | null): num
   return internal / external;
 }
 
+/**
+ * Charge suggérée en kg à partir d'un 1RM et d'un pourcentage programmé
+ * (`session_exercises.load_note` en mode `pct_1rm`). Arrondie au 0,5 kg le
+ * plus proche (plus petit incrément de chargement courant en musculation).
+ * Une suggestion à ajuster par le coach, jamais une prescription automatique.
+ */
+export function suggestedLoadKg(oneRepMax: number | null, pct: number | null): number | null {
+  if (oneRepMax === null || pct === null || oneRepMax <= 0 || pct <= 0) return null;
+  return Math.round((oneRepMax * (pct / 100)) * 2) / 2;
+}
+
 export function fmtPct(v: number | null, digits = 0): string {
   if (v === null) return '—';
   const s = (v * 100).toFixed(digits);

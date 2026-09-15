@@ -40,18 +40,52 @@ Aucune policy RLS nouvelle : les tables héritent du scoping équipe déjà vér
 ## Pages
 | Route | Rôle |
 |---|---|
-| `app/coach/layout.tsx` + `components/CoachShell.tsx` | Layout minimal : login, garde d'accès staff, nav (Aujourd'hui/Séances/Exercices/Calendrier), sélecteur de périmètre si multi-équipe. |
+| `app/coach/layout.tsx` + `components/CoachShell.tsx` | Layout minimal : login, garde d'accès staff, nav (Aujourd'hui/Séances/Modèles/Exercices/Joueurs/Calendrier), sélecteur de périmètre si multi-équipe, lien croisé vers `/admin/sport`. |
 | `app/coach/page.tsx` | Accueil : séances du jour / des 7 prochains jours, nombre d'exercices actifs, accès rapides. |
 | `app/coach/exercises/page.tsx` | Banque d'exercices groupée par Musculation (force/hypertrophie/puissance/gainage) / Préparation physique (vitesse/pliométrie/mobilité/prévention/cardio) / Échauffement & récupération. |
-| `app/coach/sessions/page.tsx` | Créer une séance + modal Programme : séries, répétitions, type de charge (kg/%1RM/RPE/poids de corps), tempo, récupération. |
+| `app/coach/sessions/page.tsx` | Créer une séance + modal Programme : séries, répétitions, type de charge (kg/%1RM/RPE/poids de corps), tempo, récupération, application d'un modèle en un clic. |
+| `app/coach/templates/page.tsx` | Modèles de programme réutilisables (`program_templates` + `program_template_exercises`) : construire un bloc une fois, l'appliquer à n'importe quelle séance. |
+| `app/coach/players/page.tsx` | Suivi individuel du 1RM par joueur × exercice (`player_one_rep_maxes`) + simulateur de charge (60→90 % du dernier 1RM connu). |
 | `app/coach/calendar/page.tsx` | Vue mois des séances du périmètre du coach. |
 
+## Migration `20260915090000_lot12_b_one_rep_max.sql` — suivi individuel du 1RM
+`player_one_rep_maxes` (organization_id, player_id, exercise_id, value_kg, method
+`tested`/`estimated`, recorded_at, notes) : historique en lecture seule (comme `test_results`, pas de
+UPDATE — chaque nouvelle valeur est une ligne). RLS : lecture via `private.can_access_player` (même
+règle que `test_results`/`gps_records`/`session_rpe` — joueur lui-même + staff scopé équipe), écriture
+`private.is_org_editor` + `private.can_access_player`.
+
+`lib/stats.ts` : `suggestedLoadKg(oneRepMax, pct)` — charge suggérée en kg, arrondie au 0,5 kg près,
+`null` si donnée manquante. C'est une **suggestion affichée**, jamais injectée automatiquement dans
+`session_exercises.load_note` : le coach reste décisionnaire de la charge finale programmée.
+
+## Migration `20260915091000_lot12_c_program_templates.sql` — modèles réutilisables
+`program_templates` + `program_template_exercises`, même structure que `session_exercises` mais
+détachée d'une séance précise. RLS identique à la banque d'exercices (LOT 11a) : lecture par tout
+participant de l'organisation, écriture par l'éditeur. Le modal Programme d'une séance
+(`app/coach/sessions/page.tsx`) propose désormais un sélecteur de modèle + « Appliquer » qui copie
+son contenu (position, séries, reps, charge, tempo, récup) dans la séance en une insertion groupée.
+
+## Complémentarité avec HDY Performance Engine
+Un modèle, un exercice, un 1RM ou une séance créés depuis HDY Coach sont **immédiatement visibles**
+côté HDY Performance Engine (même tables, même RLS scopée organisation/équipe) : la séance apparaît
+dans `/admin/sport/sessions` et `/admin/sport/calendar`, l'exercice dans `/admin/sport/exercises`.
+Liens croisés ajoutés dans les deux sens : `/admin/sport` affiche désormais un bandeau « Ouvrir HDY
+Coach → » (à côté de celui vers Administration), et l'en-tête HDY Coach affiche « HDY Performance
+Engine → ». Le suivi individuel du 1RM (`/coach/players`) est le pendant HDY Coach du suivi HRV
+individuel de HDY Elite (`/admin/sport/hrv`) — même logique : un espace dédié au suivi longitudinal
+d'un athlète en particulier, en complément du monitoring d'équipe.
+
 ## Tests
-`npm test` 33/33 vert (inchangé), `npx tsc --noEmit` vert, `npm run build` vert — 4 nouvelles routes
-statiques (`/coach`, `/coach/sessions`, `/coach/exercises`, `/coach/calendar`).
+`npm test` 36/36 vert (31 dans `lib/stats.test.ts`, dont 4 nouveaux cas `suggestedLoadKg`),
+`npx tsc --noEmit` vert, `npm run build` vert — 6 routes `/coach/*` (`page`, `sessions`, `templates`,
+`exercises`, `players`, `calendar`).
 
 ## Limites connues
-- Pas encore de calcul/suivi automatique du 1RM à partir des `test_results` existants pour suggérrer
-  les % de charge — le coach saisit la valeur lui-même dans `load_note`.
-- Pas de page joueur dédiée HDY Coach : le joueur continue de voir son programme via l'onglet Agenda
-  de l'espace joueur existant (LOT 11), qui lit les mêmes `session_exercises`.
+- Pas de suggestion automatique du 1RM à partir des `test_results` génériques (ex. un test de force
+  standardisé) — c'est un historique dédié, saisi indépendamment.
+- Pas de page joueur dédiée HDY Coach : le joueur continue de voir son programme (y compris le
+  contenu appliqué depuis un modèle) via l'onglet Agenda de l'espace joueur existant (LOT 11), qui
+  lit les mêmes `session_exercises`. Le tempo/type de charge n'y sont pas encore affichés côté joueur.
+- Le simulateur de charge (`/coach/players`) affiche des paliers fixes (60→90 %) ; pas encore de
+  saisie libre d'un pourcentage arbitraire.

@@ -16,6 +16,8 @@ const LOAD_TYPES = [
 function SessionProgram({ session, orgId, onClose }: { session: Row; orgId: string; onClose: () => void }) {
   const [exercises, setExercises] = useState<Row[]>([]);
   const [content, setContent] = useState<Row[]>([]);
+  const [templates, setTemplates] = useState<Row[]>([]);
+  const [templateId, setTemplateId] = useState('');
   const [exerciseId, setExerciseId] = useState('');
   const [sets, setSets] = useState(4);
   const [reps, setReps] = useState('6');
@@ -27,13 +29,16 @@ function SessionProgram({ session, orgId, onClose }: { session: Row; orgId: stri
   const [msg, setMsg] = useState('');
 
   async function load() {
-    const [{ data: ex }, { data: se }] = await Promise.all([
+    const [{ data: ex }, { data: se }, { data: tpl }] = await Promise.all([
       supabase.from('exercises').select('*').eq('organization_id', orgId).eq('active', true).order('name'),
       supabase.from('session_exercises').select('*, exercise:exercises(name,category)').eq('session_id', session.id).order('position'),
+      supabase.from('program_templates').select('id,name').eq('organization_id', orgId).eq('active', true).order('name'),
     ]);
     setExercises(ex || []);
     setContent(se || []);
+    setTemplates(tpl || []);
     if (!exerciseId && ex?.length) setExerciseId(ex[0].id);
+    if (!templateId && tpl?.length) setTemplateId(tpl[0].id);
   }
   useEffect(() => { load(); }, [session.id]);
 
@@ -51,6 +56,22 @@ function SessionProgram({ session, orgId, onClose }: { session: Row; orgId: stri
     const { error } = await supabase.from('session_exercises').delete().eq('id', id);
     if (!error) await load();
   }
+  async function applyTemplate() {
+    if (!templateId) { setMsg('Choisis un modèle.'); return; }
+    const { data: tplExercises, error: readErr } = await supabase
+      .from('program_template_exercises').select('*').eq('template_id', templateId).order('position');
+    if (readErr) { setMsg(readErr.message); return; }
+    if (!tplExercises?.length) { setMsg('Ce modèle est vide.'); return; }
+    const offset = content.length;
+    const payload = tplExercises.map((t, i) => ({
+      organization_id: orgId, session_id: session.id, exercise_id: t.exercise_id, position: offset + i,
+      sets: t.sets, reps: t.reps, load_type: t.load_type, load_note: t.load_note, tempo: t.tempo,
+      rest_seconds: t.rest_seconds, notes: t.notes,
+    }));
+    const { error } = await supabase.from('session_exercises').insert(payload);
+    setMsg(error ? error.message : `${payload.length} exercice(s) du modèle appliqué(s) ✓`);
+    if (!error) await load();
+  }
 
   return (
     <div style={S.overlay} onClick={onClose}>
@@ -60,6 +81,15 @@ function SessionProgram({ session, orgId, onClose }: { session: Row; orgId: stri
           <button onClick={onClose} style={S.smallGhost}>Fermer</button>
         </div>
         {msg && <div style={S.notice}>{msg}</div>}
+        {templates.length > 0 && (
+          <div style={S.templateBar}>
+            <select value={templateId} onChange={(e) => setTemplateId(e.target.value)} style={S.input}>
+              {templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+            <button onClick={applyTemplate} style={S.smallGhost}>Appliquer ce modèle</button>
+            <a href="/coach/templates" style={S.templateLink}>Gérer les modèles →</a>
+          </div>
+        )}
         <div style={S.programGrid}>
           <div style={S.card}>
             <h3 style={S.h3}>Ajouter un exercice</h3>
@@ -211,6 +241,8 @@ const S: Record<string, React.CSSProperties> = {
   row: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #1E2023' },
   small: { display: 'block', color: '#71717A', marginTop: 2 },
   smallGhost: { border: '1px solid #2B2B31', borderRadius: 8, padding: '6px 10px', fontWeight: 700, color: '#fff', background: 'transparent', cursor: 'pointer', fontSize: 12 },
+  templateBar: { display: 'flex', alignItems: 'center', gap: 10, background: '#1B1B1F', border: '1px solid #2B2B31', borderRadius: 12, padding: 10 },
+  templateLink: { marginLeft: 'auto', color: '#71717A', fontSize: 12, textDecoration: 'none', whiteSpace: 'nowrap' },
   overlay: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', display: 'grid', placeItems: 'center', padding: 20, zIndex: 50 },
   modal: { background: '#0D0D0F', border: '1px solid #24262A', borderRadius: 18, padding: 20, maxWidth: 900, width: '100%', maxHeight: '88vh', overflowY: 'auto', display: 'grid', gap: 14 },
   programGrid: { display: 'grid', gridTemplateColumns: 'minmax(260px,.9fr) minmax(0,1.1fr)', gap: 14 },

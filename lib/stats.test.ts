@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   fmtNum, fmtPct, loadRatio, mean, median, pctChange, percentile, reviewSignal,
-  stddev, summarize, toNum, zScore,
+  stddev, suggestedLoadKg, summarize, toNum, zScore,
 } from '@/lib/stats';
 
 describe('toNum', () => {
@@ -165,5 +165,21 @@ describe('loadRatio', () => {
     expect(loadRatio(450, null)).toBeNull();
     expect(loadRatio(450, 0)).toBeNull();
     expect(loadRatio(450, -10)).toBeNull();
+  });
+});
+
+describe('suggestedLoadKg', () => {
+  it('calcule la charge à partir du 1RM et du pourcentage programmé', () => {
+    expect(suggestedLoadKg(100, 75)).toBe(75);
+  });
+  it('arrondit au 0,5 kg le plus proche', () => {
+    expect(suggestedLoadKg(83, 70)).toBe(58);
+    expect(suggestedLoadKg(87, 70)).toBe(61);
+  });
+  it('renvoie null si une valeur manque ou est nulle/négative', () => {
+    expect(suggestedLoadKg(null, 75)).toBeNull();
+    expect(suggestedLoadKg(100, null)).toBeNull();
+    expect(suggestedLoadKg(0, 75)).toBeNull();
+    expect(suggestedLoadKg(100, -5)).toBeNull();
   });
 });
