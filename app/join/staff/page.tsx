@@ -57,11 +57,11 @@ export default function StaffJoinPage(){
   }
 
   if(loading&&!invite)return <main style={s.center}>Vérification du lien…</main>;
-  if(done)return <main style={s.center}><section style={s.card}><div style={s.mark}>HDY</div><h1>Accès staff activé</h1><p>Votre compte Diambars est maintenant actif. Ouverture de l’espace Sport & Performance…</p></section></main>;
+  if(done)return <main style={s.center}><section style={s.card}><div style={s.mark}>HDY</div><h1>Accès staff activé</h1><p>Votre compte {invite?.organization_name||''} est maintenant actif. Ouverture de l’espace Sport & Performance…</p></section></main>;
 
   return <main style={s.main}><section style={s.card}>
     <div style={s.brand}><div style={s.mark}>HDY</div><div><b>PERFORMANCE</b><span> ENGINE</span></div></div>
-    <p style={s.kicker}>DIAMBARS FC · INVITATION STAFF</p>
+    <p style={s.kicker}>{invite?.organization_name?`${invite.organization_name} · `:''}INVITATION STAFF</p>
     <h1 style={s.h1}>Bienvenue {invite?.full_name||''}</h1>
     <p style={s.sub}>Activez votre accès professionnel à HDY Performance Engine pour le suivi des joueurs et du travail de performance.</p>
     {invite&&<div style={s.identity}><small>ACCÈS AUTORISÉ</small><strong>{invite.email}</strong><span>{ROLE_LABEL[invite.role]||invite.role}{invite.team_name?` · ${invite.team_name}`:' · Toutes équipes'}</span></div>}
@@ -72,7 +72,7 @@ export default function StaffJoinPage(){
     </form>}
     {invite?.used&&<p style={s.notice}>Cette invitation a déjà été utilisée. Connectez-vous à HDY Performance Engine avec votre e-mail.</p>}
     {msg&&<p style={s.notice}>{msg}</p>}
-    <p style={s.privacy}>Accès nominatif et sécurisé · les permissions sont attribuées par l’administrateur Diambars.</p>
+    <p style={s.privacy}>Accès nominatif et sécurisé · les permissions sont attribuées par l’administrateur {invite?.organization_name||'de l’organisation'}.</p>
   </section></main>
 }
 

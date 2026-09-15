@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { checkPassword } from '@/lib/password';
 
-type Invite={player_id:string;display_name:string|null;email:string;expires_at:string;used:boolean};
+type Invite={player_id:string;display_name:string|null;email:string;expires_at:string;used:boolean;organization_name:string|null};
 
 export default function PlayerJoinPage(){
   const [token,setToken]=useState('');
@@ -59,7 +59,7 @@ export default function PlayerJoinPage(){
 
   return <main style={s.main}><section style={s.card}>
     <div style={s.brand}><div style={s.mark}>HDY</div><div><b>PERFORMANCE</b><span> ENGINE</span></div></div>
-    <p style={s.kicker}>DIAMBARS FC · ACTIVATION JOUEUR</p>
+    <p style={s.kicker}>{invite?.organization_name?`${invite.organization_name} · `:''}ACTIVATION JOUEUR</p>
     <h1 style={s.h1}>Bienvenue {invite?.display_name||''}</h1>
     <p style={s.sub}>Active ton accès personnel pour renseigner ton Hooper quotidien, ton RPE après séance et déclarer une douleur si nécessaire.</p>
     {invite&&<div style={s.identity}><small>COMPTE AUTORISÉ</small><strong>{invite.email}</strong></div>}
