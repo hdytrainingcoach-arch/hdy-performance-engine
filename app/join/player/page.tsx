@@ -45,12 +45,12 @@ export default function PlayerJoinPage(){
     const redirectTo=`${window.location.origin}/join/player?token=${encodeURIComponent(token)}`;
     const {data,error}=await supabase.auth.signUp({email:invite.email,password,options:{emailRedirectTo:redirectTo}});
     if(error){
-      if(error.message.toLowerCase().includes('already')) setMsg('Un compte existe déjà avec cet e-mail. Connecte-toi depuis la page principale puis rouvre ce lien.');
+      if(error.message.toLowerCase().includes('already')) setMsg('Un compte existe déjà avec cet e-mail. Connecte-toi depuis la page principale : ton dossier sera relié automatiquement.');
       else setMsg(error.message);
       setLoading(false);return;
     }
     if(data.session){await claim(token);setLoading(false);return;}
-    setMsg('Compte créé. Ouvre l’e-mail de confirmation reçu, puis tu seras redirigé vers ton espace joueur.');
+    setMsg('Compte créé. Ouvre l’e-mail de confirmation reçu, puis connecte-toi sur la page principale avec ton e-mail et ton mot de passe : ton dossier sera relié automatiquement.');
     setLoading(false);
   }
 
